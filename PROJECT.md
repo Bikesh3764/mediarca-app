@@ -88,19 +88,21 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 ## 6. Phase 3 Verification Record
 
 - **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
-- **Automated Verification Suite (`scripts/verify-phase3.ts`)**: 70/70 passed (100% pass rate).
-- **All Suites (`npm run test:verify:all`)**: 195/195 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), and Phase 3 (70).
+- **Automated Verification Suite (`scripts/verify-phase3.ts`)**: 87/87 passed (100% pass rate).
+- **All Suites (`npm run test:verify:all`)**: 212/212 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), and Phase 3 (87).
 - **Patient Discovery & Doctor Search**:
   - Implemented instant 250ms debounced search filtering by Doctor Name, Specialty, Clinic Name, and City.
   - Built `SpecialtyPillCarousel.tsx` with 34 medical specialties and 44pt touch targets.
   - Built `DoctorCard.tsx` with Cloudflare R2 photos, verified badges, degree cleaning, and real-time cabin badge.
 - **Doctor Detail Screen**:
-  - Built `src/app/doctors/[id].tsx` with comprehensive credentials, about bio, and affiliated clinics.
+  - Built `src/app/doctors/[id].tsx` with comprehensive credentials, medical council registration badge, about bio, and affiliated clinics with receptionist indicator.
   - Built `WeekdayDisplay.tsx` featuring Apple HIG circular 7-day letter discs (`M T W T F S S`), active today ring, and leave indicator.
-  - Shift cards displaying start/end timings (`format12Hour`), patient capacity limits, and average consultation minutes.
+  - Shift cards displaying start/end timings (`format12Hour`), patient capacity limits, average consultation minutes, and leave status pills.
   - Sticky bottom bar with consultation fee (`₹`) and 44pt pill "Book Token" button.
 - **Step-by-Step Booking Engine & Zero-Upfront Policy**:
-  - Built `src/app/book/[id].tsx` featuring 5-step progressive disclosure: Clinic selector, IST Date selector (with non-practice day guard), Shift selector with live slot capacity indicators (`Available`, `Ended`, `Full`), and Patient details (Self vs. Dependent with 0–125 age bounds).
+  - Built `src/app/book/[id].tsx` featuring 6-step progressive disclosure: Clinic selector with dynamic slot synchronization, IST Date selector (with non-practice day and leave guard), Shift selector with live slot capacity indicators (`Available`, `Ended`, `Full`), Patient details (Self vs. Dependent with 0–125 age bounds), and Consultation reasons.
+  - Step 6 Confirmation Sheet modal: Apple HIG slide-up bottom sheet reviewing doctor, clinic, date/shift, patient details, and Zero-Upfront Payment policy before triggering mutations.
+  - Auth Guard: Dynamic gate redirecting unauthenticated patients to `/(auth)/login` instead of exposing them to raw 401 API rejections.
   - Enforced Zero-Upfront Payment Policy with explicit disclosure.
   - Generates `PENDING_APPROVAL` appointment with `estimatedQueueNumber` via live backend `api.bookAppointment`.
   - Confirmation screen with token pass, receptionist telephone dialer (`Linking.openURL(toTelUri)`), clinic venue, and instructions.

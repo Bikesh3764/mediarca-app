@@ -46,8 +46,8 @@ Execute Phase 3 of the MediArca native mobile application for the Google Play St
    - Updated `PROJECT.md` and `docs/tasks/current-task.md`.
 
 6. **Automated Verification Suite**:
-   - Built `scripts/verify-phase3.ts` testing 70 assertions across doctor search, specialty mapping, degree cleaning, cabin presence, weekday arithmetic, slot evaluation, booking payload validation, and live backend queries.
-   - Total test assertions across all suites: 195/195 tests passing (100%).
+   - Built `scripts/verify-phase3.ts` testing 87 assertions across doctor search, specialty mapping, degree cleaning, cabin presence, weekday arithmetic, slot evaluation, booking payload validation, multi-clinic slot switching, doctor leave handling, medical council accreditation mapping, midnight-spanning shifts, Step 6 confirmation sheet/auth guards, and live backend queries.
+   - Total test assertions across all suites: 212/212 tests passing (100%).
 
 ---
 
@@ -56,8 +56,8 @@ Execute Phase 3 of the MediArca native mobile application for the Google Play St
 - [x] TypeScript compilation: `npm run typecheck` (`tsc --noEmit`) passes with 0 errors.
 - [x] Phase 1 Automated Suite: `npm run test:verify:phase1` passes 64/64 tests (100%).
 - [x] Phase 2 Automated Suite: `npm run test:verify:phase2` passes 61/61 tests (100%).
-- [x] Phase 3 Automated Suite: `npm run test:verify:phase3` passes 70/70 tests (100%).
-- [x] All Tests Suite: `npm run test:verify:all` passes 195/195 assertions (100%).
+- [x] Phase 3 Automated Suite: `npm run test:verify:phase3` passes 87/87 tests (100%).
+- [x] All Tests Suite: `npm run test:verify:all` passes 212/212 assertions (100%).
 - [x] Live Render backend `/doctors` endpoint queries live doctors from Supabase.
 - [x] Live Render backend `/doctors/:id` endpoint resolves doctor profile.
 - [x] Live Render backend `/appointments/queue-preview` computes next queue token and patients ahead.

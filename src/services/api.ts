@@ -1050,6 +1050,8 @@ export interface Doctor {
   avgConsultationMinutes: number;
   maxDailyPatients: number;
   slots?: DoctorSlot[];
+  workingDays?: string[] | null;
+  leaves?: DoctorLeave[] | null;
   cabinStatus?: 'IN_CABIN' | 'STEPPED_OUT' | 'NOT_IN_CABIN' | string;
   expectedReturnTime?: string | null;
   cabinStatusUpdatedAt?: string | null;
@@ -1059,6 +1061,8 @@ export interface Doctor {
     clinic: ClinicProfile;
     consultationFee?: number;
     slots?: DoctorSlot[];
+    workingDays?: string[];
+    leaves?: DoctorLeave[];
     hasReceptionist?: boolean;
     receptionists?: Array<{
       id: string;
@@ -1630,7 +1634,7 @@ export const api = {
       const slotQuery = slotId ? `&slotId=${encodeURIComponent(slotId)}` : '';
       const clinicQuery = clinicId ? `&clinicId=${encodeURIComponent(clinicId)}` : '';
       const res = await safeFetch(
-        `${API_BASE_URL}/appointments/queue-preview?doctorId=${doctorId}&appointmentDate=${appointmentDate}${slotQuery}${clinicQuery}`
+        `${API_BASE_URL}/appointments/queue-preview?doctorId=${encodeURIComponent(doctorId)}&appointmentDate=${encodeURIComponent(appointmentDate)}${slotQuery}${clinicQuery}`
       );
       return await handleResponse(res);
     } catch (err) {

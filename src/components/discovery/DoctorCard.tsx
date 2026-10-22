@@ -116,6 +116,9 @@ export const DoctorCard: React.FC<DoctorCardProps> = ({
         <Text style={styles.clinicText} numberOfLines={1}>
           {clinicName}
           {clinicCity ? ` · ${clinicCity}` : ''}
+          {doctor.clinics && doctor.clinics.length > 1
+            ? ` (+${doctor.clinics.length - 1} more)`
+            : ''}
         </Text>
       </View>
 

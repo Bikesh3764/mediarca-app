@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
+  Modal,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -63,6 +64,22 @@ export default function BookAppointmentScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [confirmedAppointment, setConfirmedAppointment] = useState<Appointment | null>(null);
+  const [showConfirmSheet, setShowConfirmSheet] = useState(false);
+
+  // Clinic Selection with Slot Synchronization
+  const handleSelectClinic = (clinicId: string) => {
+    setSelectedClinicId(clinicId);
+    const targetClinic = doctor?.clinics?.find((c) => c.clinicId === clinicId);
+    const clinicSlots =
+      targetClinic?.slots && targetClinic.slots.length > 0
+        ? targetClinic.slots
+        : doctor ? parseDoctorSlots(doctor) : [];
+
+    const slotStillExists = clinicSlots.some((s) => s.id === selectedSlotId);
+    if (!slotStillExists) {
+      setSelectedSlotId(clinicSlots[0]?.id || null);
+    }
+  };
 
   // 1. Fetch Doctor details
   const fetchDoctor = useCallback(async () => {
@@ -136,29 +153,73 @@ export default function BookAppointmentScreen() {
     selectedClinic?.slots && selectedClinic.slots.length > 0
       ? selectedClinic.slots
       : doctor ? parseDoctorSlots(doctor) : [];
+  const selectedSlot = activeSlots.find((s) => s.id === selectedSlotId) || activeSlots[0];
 
   const workingDays =
+    selectedClinic?.workingDays ||
     queuePreview?.workingDays ||
+    doctor?.workingDays ||
     ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-  // Generate 7 upcoming dates with IST calendar arithmetic
+  const activeLeaves = useMemo(() => {
+    const list: any[] = [];
+    if (queuePreview?.leaves && Array.isArray(queuePreview.leaves)) {
+      list.push(...queuePreview.leaves);
+    }
+    if (selectedClinic?.leaves && Array.isArray(selectedClinic.leaves)) {
+      list.push(...selectedClinic.leaves);
+    }
+    if (doctor?.leaves && Array.isArray(doctor.leaves)) {
+      list.push(...doctor.leaves);
+    }
+    return list;
+  }, [queuePreview?.leaves, selectedClinic?.leaves, doctor?.leaves]);
+
+  // Generate 7 upcoming dates with IST calendar arithmetic and leave detection
   const upcomingDates = useMemo(() => {
-    const dates: Array<{ dateStr: string; dayName: string; dayNum: string; isSitting: boolean }> = [];
+    const dates: Array<{
+      dateStr: string;
+      dayName: string;
+      dayNum: string;
+      isSitting: boolean;
+      isOnLeave: boolean;
+      isDayOff: boolean;
+    }> = [];
     const base = new Date();
 
     for (let i = 0; i < 7; i++) {
       const targetDate = new Date(base.getTime() + i * 24 * 60 * 60 * 1000);
       const dateStr = getLocalDateString(targetDate);
       const dayCode = getDayOfWeekCode(dateStr);
-      const isSitting = workingDays.includes(dayCode);
+      const isDayOff = !workingDays.includes(dayCode);
+      const isOnLeave = activeLeaves.some((l) => {
+        if (l.type === 'TODAY') {
+          return dateStr === getLocalDateString();
+        }
+        return Boolean(l.startDate && l.endDate && dateStr >= l.startDate && dateStr <= l.endDate);
+      });
+      const isSitting = !isDayOff && !isOnLeave;
 
       const dayName = i === 0 ? 'Today' : i === 1 ? 'Tmrw' : dayCode.slice(0, 3);
       const dayNum = dateStr.split('-')[2];
 
-      dates.push({ dateStr, dayName, dayNum, isSitting });
+      dates.push({ dateStr, dayName, dayNum, isSitting, isOnLeave, isDayOff });
     }
     return dates;
-  }, [workingDays]);
+  }, [workingDays, activeLeaves]);
+
+  // Auto-select first available practice day if currently selected date is off or on leave
+  useEffect(() => {
+    if (upcomingDates.length > 0) {
+      const currentSelected = upcomingDates.find((d) => d.dateStr === appointmentDate);
+      if (!currentSelected || !currentSelected.isSitting) {
+        const firstAvailable = upcomingDates.find((d) => d.isSitting);
+        if (firstAvailable) {
+          setAppointmentDate(firstAvailable.dateStr);
+        }
+      }
+    }
+  }, [upcomingDates, appointmentDate]);
 
   // Slot status checks
   const isSelectedSlotOnLeave = Boolean(queuePreview?.isOnLeave);
@@ -176,8 +237,13 @@ export default function BookAppointmentScreen() {
       ? `${selectedClinic.clinic.clinicName} Desk`
       : 'Front Desk Receptionist';
 
-  // Handle Booking Submission
-  const handleBookingSubmit = async () => {
+  // Handle Booking Review (opens Step 6 Confirmation Sheet)
+  const handleReviewPress = () => {
+    if (!isAuthenticated) {
+      router.push('/(auth)/login');
+      return;
+    }
+
     if (!doctor) return;
     setErrorMessage(null);
 
@@ -218,6 +284,14 @@ export default function BookAppointmentScreen() {
       return;
     }
 
+    setShowConfirmSheet(true);
+  };
+
+  // Handle Booking Submission
+  const handleBookingSubmit = async () => {
+    if (!doctor) return;
+    setErrorMessage(null);
+
     setSubmitting(true);
     try {
       const isForOther = bookingFor === 'dependent';
@@ -234,6 +308,7 @@ export default function BookAppointmentScreen() {
         patientGender: isForOther ? patientGender : undefined,
       });
 
+      setShowConfirmSheet(false);
       setConfirmedAppointment(appt);
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to complete appointment booking.');
@@ -419,6 +494,7 @@ export default function BookAppointmentScreen() {
               {doctor.clinics.map((cd) => {
                 const isSelected = selectedClinicId === cd.clinicId;
                 const cFee = cd.consultationFee ?? doctor.consultationFee;
+                const hasDesk = cd.hasReceptionist ?? (cd.receptionists && cd.receptionists.length > 0);
                 return (
                   <TouchableOpacity
                     key={cd.clinicId}
@@ -426,7 +502,7 @@ export default function BookAppointmentScreen() {
                       styles.clinicOption,
                       isSelected && styles.clinicOptionSelected,
                     ]}
-                    onPress={() => setSelectedClinicId(cd.clinicId)}
+                    onPress={() => handleSelectClinic(cd.clinicId)}
                   >
                     <View style={styles.clinicOptionLeft}>
                       <Text style={styles.clinicOptionName}>
@@ -435,6 +511,19 @@ export default function BookAppointmentScreen() {
                       <Text style={styles.clinicOptionAddr}>
                         {cd.clinic.address}
                       </Text>
+                      <View style={styles.clinicBadgeRow}>
+                        {hasDesk ? (
+                          <View style={styles.deskActiveBadge}>
+                            <Ionicons name="checkmark-circle" size={10} color="#047857" />
+                            <Text style={styles.deskActiveBadgeText}>Front Desk Active</Text>
+                          </View>
+                        ) : (
+                          <View style={styles.deskInactiveBadge}>
+                            <Ionicons name="alert-circle-outline" size={10} color="#b45309" />
+                            <Text style={styles.deskInactiveBadgeText}>Walk-in Only (No Front Desk)</Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
                     <View style={styles.clinicOptionRight}>
                       <Text style={styles.clinicOptionFee}>₹{cFee}</Text>
@@ -469,7 +558,7 @@ export default function BookAppointmentScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.dateStrip}
           >
-            {upcomingDates.map(({ dateStr, dayName, dayNum, isSitting }) => {
+            {upcomingDates.map(({ dateStr, dayName, dayNum, isSitting, isOnLeave }) => {
               const isSelected = appointmentDate === dateStr;
 
               return (
@@ -503,7 +592,9 @@ export default function BookAppointmentScreen() {
                     {dayNum}
                   </Text>
                   {!isSitting && (
-                    <Text style={styles.datePillOffLabel}>Off</Text>
+                    <Text style={styles.datePillOffLabel}>
+                      {isOnLeave ? 'Leave' : 'Off'}
+                    </Text>
                   )}
                 </TouchableOpacity>
               );
@@ -620,42 +711,62 @@ export default function BookAppointmentScreen() {
             <Text style={styles.stepTitle}>Patient Information</Text>
           </View>
 
-          {/* Toggle Self vs Dependent */}
-          <View style={styles.segmentTrack}>
-            <TouchableOpacity
-              style={[
-                styles.segmentItem,
-                bookingFor === 'myself' && styles.segmentItemSelected,
-              ]}
-              onPress={() => setBookingFor('myself')}
-            >
-              <Text
-                style={[
-                  styles.segmentText,
-                  bookingFor === 'myself' && styles.segmentTextSelected,
-                ]}
-              >
-                Book for Myself
+          {!isAuthenticated ? (
+            <View style={styles.authNoticeCard}>
+              <View style={styles.authNoticeHeader}>
+                <Ionicons name="lock-closed" size={20} color={Colors.primary} />
+                <Text style={styles.authNoticeTitle}>Sign In Required</Text>
+              </View>
+              <Text style={styles.authNoticeBody}>
+                You need an active patient account to generate an estimated queue token and track queue position.
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.authSignInButton}
+                onPress={() => router.push('/(auth)/login')}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="log-in-outline" size={16} color={Colors.inkWhite} />
+                <Text style={styles.authSignInText}>Sign In / Register</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              {/* Toggle Self vs Dependent */}
+              <View style={styles.segmentTrack}>
+                <TouchableOpacity
+                  style={[
+                    styles.segmentItem,
+                    bookingFor === 'myself' && styles.segmentItemSelected,
+                  ]}
+                  onPress={() => setBookingFor('myself')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      bookingFor === 'myself' && styles.segmentTextSelected,
+                    ]}
+                  >
+                    Book for Myself
+                  </Text>
+                </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[
-                styles.segmentItem,
-                bookingFor === 'dependent' && styles.segmentItemSelected,
-              ]}
-              onPress={() => setBookingFor('dependent')}
-            >
-              <Text
-                style={[
-                  styles.segmentText,
-                  bookingFor === 'dependent' && styles.segmentTextSelected,
-                ]}
-              >
-                Book for Dependent
-              </Text>
-            </TouchableOpacity>
-          </View>
+                <TouchableOpacity
+                  style={[
+                    styles.segmentItem,
+                    bookingFor === 'dependent' && styles.segmentItemSelected,
+                  ]}
+                  onPress={() => setBookingFor('dependent')}
+                >
+                  <Text
+                    style={[
+                      styles.segmentText,
+                      bookingFor === 'dependent' && styles.segmentTextSelected,
+                    ]}
+                  >
+                    Book for Dependent
+                  </Text>
+                </TouchableOpacity>
+              </View>
 
           {/* Self Profile View */}
           {bookingFor === 'myself' ? (
@@ -729,7 +840,9 @@ export default function BookAppointmentScreen() {
               </View>
             </View>
           )}
-        </AppCard>
+        </>
+      )}
+    </AppCard>
 
         {/* Step 5: Reason for Visit & Symptoms */}
         <AppCard style={styles.stepCard}>
@@ -794,32 +907,197 @@ export default function BookAppointmentScreen() {
           <Text style={styles.bottomFeeValue}>₹{activeFee}</Text>
         </View>
 
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            (submitting || isSelectedSlotOnLeave || isSelectedSlotDayOff || isSelectedSlotPassed || isSelectedSlotFull) &&
-              styles.submitButtonDisabled,
-          ]}
-          disabled={
-            submitting ||
-            isSelectedSlotOnLeave ||
-            isSelectedSlotDayOff ||
-            isSelectedSlotPassed ||
-            isSelectedSlotFull
-          }
-          onPress={handleBookingSubmit}
-          activeOpacity={0.88}
-        >
-          {submitting ? (
-            <ActivityIndicator size="small" color={Colors.inkWhite} />
-          ) : (
-            <>
-              <Text style={styles.submitButtonText}>Request Token</Text>
-              <Ionicons name="checkmark" size={16} color={Colors.inkWhite} />
-            </>
-          )}
-        </TouchableOpacity>
+        {!isAuthenticated ? (
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={() => router.push('/(auth)/login')}
+            activeOpacity={0.88}
+          >
+            <Ionicons name="log-in-outline" size={16} color={Colors.inkWhite} />
+            <Text style={styles.submitButtonText}>Sign In to Book</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.submitButton,
+              (submitting || isSelectedSlotOnLeave || isSelectedSlotDayOff || isSelectedSlotPassed || isSelectedSlotFull) &&
+                styles.submitButtonDisabled,
+            ]}
+            disabled={
+              submitting ||
+              isSelectedSlotOnLeave ||
+              isSelectedSlotDayOff ||
+              isSelectedSlotPassed ||
+              isSelectedSlotFull
+            }
+            onPress={handleReviewPress}
+            activeOpacity={0.88}
+          >
+            <Text style={styles.submitButtonText}>Review & Book Token</Text>
+            <Ionicons name="arrow-forward" size={16} color={Colors.inkWhite} />
+          </TouchableOpacity>
+        )}
       </View>
+
+      {/* Step 6: Apple HIG Confirmation Sheet enforcing Zero-Upfront Payment Policy */}
+      <Modal
+        visible={showConfirmSheet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          if (!submitting) setShowConfirmSheet(false);
+        }}
+      >
+        <View style={styles.modalBackdrop}>
+          <TouchableOpacity
+            style={styles.modalDismissOverlay}
+            activeOpacity={1}
+            onPress={() => {
+              if (!submitting) setShowConfirmSheet(false);
+            }}
+          />
+
+          <View style={[styles.modalSheet, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+            {/* Sheet Handle */}
+            <View style={styles.modalDragHandle} />
+
+            <View style={styles.modalHeaderRow}>
+              <View>
+                <Text style={styles.modalHeaderSub}>STEP 6 · REVIEW & CONFIRM</Text>
+                <Text style={styles.modalHeaderTitle}>Consultation Summary</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowConfirmSheet(false)}
+                disabled={submitting}
+              >
+                <Ionicons name="close" size={20} color={Colors.ink} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
+              {/* Summary Items */}
+              <View style={styles.summarySection}>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>PRACTITIONER</Text>
+                  <Text style={styles.summaryValueBold}>
+                    {doctor.user?.fullName?.startsWith('Dr.') ? doctor.user.fullName : `Dr. ${doctor.user?.fullName}`}
+                  </Text>
+                  <Text style={styles.summarySub}>
+                    {doctor.specialty} · {formatDoctorDegrees(doctor.qualifications)}
+                  </Text>
+                </View>
+
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>CLINICAL FACILITY</Text>
+                  <Text style={styles.summaryValueBold}>
+                    {selectedClinic?.clinic?.clinicName || 'Main Clinic Facility'}
+                  </Text>
+                  <Text style={styles.summarySub}>
+                    {selectedClinic?.clinic?.address || doctor.clinicAddress}
+                  </Text>
+                </View>
+
+                <View style={styles.summaryRow}>
+                  <View style={[styles.summaryItem, { flex: 1 }]}>
+                    <Text style={styles.summaryLabel}>APPOINTMENT DATE</Text>
+                    <Text style={styles.summaryValue}>{appointmentDate}</Text>
+                  </View>
+                  <View style={[styles.summaryItem, { flex: 1 }]}>
+                    <Text style={styles.summaryLabel}>SHIFT TIMING</Text>
+                    <Text style={styles.summaryValue}>
+                      {selectedSlot ? `${cleanSlotName(selectedSlot.name)} (${format12Hour(selectedSlot.startTime)})` : 'OPD Shift'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryLabel}>PATIENT</Text>
+                  <Text style={styles.summaryValueBold}>
+                    {bookingFor === 'dependent' ? patientName.trim() : (user?.fullName || 'Self')}
+                  </Text>
+                  <Text style={styles.summarySub}>
+                    {bookingFor === 'dependent'
+                      ? `Dependent · ${patientAge.trim()} yrs · ${patientGender}`
+                      : `Self · ${user?.phone || user?.email || ''}`}
+                  </Text>
+                </View>
+
+                {reasonForVisit.trim().length > 0 && (
+                  <View style={styles.summaryItem}>
+                    <Text style={styles.summaryLabel}>REASON FOR VISIT</Text>
+                    <Text style={styles.summaryValue}>{reasonForVisit.trim()}</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Estimated Token Preview Banner */}
+              <View style={styles.modalTokenCard}>
+                <View style={styles.modalTokenHeader}>
+                  <Ionicons name="ticket" size={20} color={Colors.primary} />
+                  <Text style={styles.modalTokenLabel}>Estimated Queue Position</Text>
+                </View>
+                <Text style={styles.modalTokenNumber}>
+                  #{queuePreview?.nextQueueNumber || 1}
+                </Text>
+                <Text style={styles.modalTokenNotice}>
+                  Provisional queue token will be reserved in PENDING_APPROVAL status.
+                </Text>
+              </View>
+
+              {/* Zero-Upfront Payment Policy Enforcement Card */}
+              <View style={styles.modalPolicyBox}>
+                <View style={styles.modalPolicyHeader}>
+                  <Ionicons name="shield-checkmark" size={20} color={Colors.primary} />
+                  <Text style={styles.modalPolicyTitle}>Zero-Upfront Payment Policy</Text>
+                </View>
+                <Text style={styles.modalPolicyText}>
+                  No payment required now. An estimated token will be issued. Pay ₹{activeFee} directly to the clinic receptionist via UPI or at the desk to confirm your appointment.
+                </Text>
+                <View style={styles.modalFeeBreakdown}>
+                  <Text style={styles.modalFeeTotalLabel}>Total Payable at Desk</Text>
+                  <Text style={styles.modalFeeTotalVal}>₹{activeFee}</Text>
+                </View>
+              </View>
+
+              {/* Submission Error in Modal */}
+              {errorMessage && (
+                <View style={styles.modalErrorBox}>
+                  <Ionicons name="alert-circle" size={16} color={Colors.danger} />
+                  <Text style={styles.modalErrorText}>{errorMessage}</Text>
+                </View>
+              )}
+            </ScrollView>
+
+            {/* Modal Action CTA Buttons */}
+            <View style={styles.modalActionsRow}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setShowConfirmSheet(false)}
+                disabled={submitting}
+              >
+                <Text style={styles.modalCancelButtonText}>Modify Details</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalConfirmButton, submitting && styles.submitButtonDisabled]}
+                onPress={handleBookingSubmit}
+                disabled={submitting}
+                activeOpacity={0.88}
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color={Colors.inkWhite} />
+                ) : (
+                  <>
+                    <Text style={styles.modalConfirmButtonText}>Confirm & Request</Text>
+                    <Ionicons name="checkmark-circle" size={16} color={Colors.inkWhite} />
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1447,5 +1725,295 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: Colors.ink,
+  },
+  clinicBadgeRow: {
+    marginTop: 4,
+  },
+  deskActiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ecfdf5',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: BorderRadius.pill,
+    alignSelf: 'flex-start',
+  },
+  deskActiveBadgeText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#047857',
+  },
+  deskInactiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#fffbeb',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: BorderRadius.pill,
+    alignSelf: 'flex-start',
+  },
+  deskInactiveBadgeText: {
+    fontSize: 10,
+    fontWeight: '500',
+    color: '#b45309',
+  },
+  authNoticeCard: {
+    backgroundColor: '#e8f2fc',
+    borderRadius: BorderRadius.md,
+    padding: Spacing.four,
+    borderWidth: 1,
+    borderColor: '#c7e0f9',
+    marginTop: Spacing.two,
+  },
+  authNoticeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  authNoticeTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  authNoticeBody: {
+    fontSize: 12,
+    color: Colors.inkMuted80,
+    lineHeight: 18,
+    marginBottom: Spacing.three,
+  },
+  authSignInButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 40,
+    borderRadius: BorderRadius.pill,
+    backgroundColor: Colors.primary,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+  },
+  authSignInText: {
+    color: Colors.inkWhite,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalDismissOverlay: {
+    flex: 1,
+  },
+  modalSheet: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.two,
+    maxHeight: '85%',
+  },
+  modalDragHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#d1d1d6',
+    alignSelf: 'center',
+    marginBottom: Spacing.three,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.three,
+  },
+  modalHeaderSub: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: Colors.primary,
+    letterSpacing: 0.5,
+  },
+  modalHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.ink,
+    letterSpacing: -0.3,
+    marginTop: 2,
+  },
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.pill,
+    backgroundColor: '#f5f5f7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBody: {
+    marginBottom: Spacing.three,
+  },
+  summarySection: {
+    backgroundColor: '#f5f5f7',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.three,
+    gap: Spacing.three,
+    borderWidth: 1,
+    borderColor: '#e5e5ea',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  summaryItem: {
+    gap: 2,
+  },
+  summaryLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.inkMuted48,
+    letterSpacing: 0.5,
+  },
+  summaryValue: {
+    fontSize: 13,
+    color: Colors.ink,
+    fontWeight: '500',
+  },
+  summaryValueBold: {
+    fontSize: 14,
+    color: Colors.ink,
+    fontWeight: '700',
+  },
+  summarySub: {
+    fontSize: 12,
+    color: Colors.inkMuted80,
+  },
+  modalTokenCard: {
+    marginTop: Spacing.three,
+    backgroundColor: '#e8f2fc',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.three,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#c7e0f9',
+  },
+  modalTokenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  modalTokenLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.primary,
+  },
+  modalTokenNumber: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: Colors.primary,
+    letterSpacing: -0.5,
+    marginVertical: 2,
+  },
+  modalTokenNotice: {
+    fontSize: 11,
+    color: Colors.inkMuted80,
+    textAlign: 'center',
+  },
+  modalPolicyBox: {
+    marginTop: Spacing.three,
+    backgroundColor: '#ffffff',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.three,
+    borderWidth: 1,
+    borderColor: '#e5e5ea',
+  },
+  modalPolicyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  modalPolicyTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  modalPolicyText: {
+    fontSize: 12,
+    color: Colors.inkMuted80,
+    lineHeight: 18,
+  },
+  modalFeeBreakdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.two,
+    paddingTop: Spacing.two,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f2',
+  },
+  modalFeeTotalLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.ink,
+  },
+  modalFeeTotalVal: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.ink,
+  },
+  modalErrorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fff1f2',
+    padding: Spacing.two,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.two,
+  },
+  modalErrorText: {
+    fontSize: 12,
+    color: Colors.danger,
+    flex: 1,
+  },
+  modalActionsRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    paddingTop: Spacing.two,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f2',
+  },
+  modalCancelButton: {
+    flex: 1,
+    height: TouchTarget.minSize,
+    borderRadius: BorderRadius.pill,
+    backgroundColor: '#f5f5f7',
+    borderWidth: 1,
+    borderColor: '#e5e5ea',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.inkMuted80,
+  },
+  modalConfirmButton: {
+    flex: 1.6,
+    height: TouchTarget.minSize,
+    borderRadius: BorderRadius.pill,
+    backgroundColor: Colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    ...Shadows.subtle,
+  },
+  modalConfirmButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.inkWhite,
   },
 });

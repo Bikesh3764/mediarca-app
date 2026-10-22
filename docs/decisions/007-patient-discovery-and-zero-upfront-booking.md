@@ -19,8 +19,10 @@ In healthcare platforms operating across India, patients require rapid discovery
 3. **Apple HIG 7-Day Circular Practice Discs (`WeekdayDisplay`)**:
    - Modeled weekly practice days as sleek circular letter discs (`M T W T F S S`), highlighting practicing days in solid black (`#1d1d1f`), off days in muted gray, and today's day with an Active Blue ring (`#0066cc`).
    - Integrated live IST date calculations (`getLocalDateString`, `getDayOfWeekCode`) to automatically indicate whether the doctor is practicing today or on leave.
-4. **Step-by-Step Multi-Stage Booking Flow**:
-   - Progressive disclosure covering: (1) Clinic selection for multi-facility doctors, (2) IST Date picker with non-practice days disabled, (3) Shift selection with live capacity metrics (`Available`, `Ended`, `Full`), (4) Patient details supporting Self-Booking vs. Family Member/Dependent with age validation (0–125), and (5) Consultation reason and symptoms.
+4. **Step-by-Step Multi-Stage Booking Flow & Confirmation Sheet**:
+   - Progressive disclosure covering: (1) Clinic selection for multi-facility doctors with immediate slot synchronization (`handleSelectClinic`), (2) IST Date picker disabling non-practice days and doctor leave intervals, (3) Shift selection with live capacity metrics (`Available`, `Ended`, `Full`), (4) Patient details supporting Self-Booking vs. Family Member/Dependent with age validation (0–125), and (5) Consultation reason and symptoms.
+   - Step 6 Confirmation Sheet Modal: Dedicated Apple HIG slide-up bottom modal enabling patients to review doctor details, clinic venue, date/shift, patient information, estimated queue preview, and the Zero-Upfront Payment policy before triggering backend state mutations.
+   - Authentication Guard: Patients must be authenticated to request a token. Unauthenticated users are presented with a clear sign-in notice and routed to `/(auth)/login` instead of exposing them to raw 401 API errors.
 5. **Enforced Zero-Upfront Payment Policy**:
    - Clear and prominent disclosure: *"No payment required now. An estimated token will be issued. Pay ₹XXX directly to the clinic receptionist via UPI or at the desk."*
    - Submits payload to live backend `api.bookAppointment` generating `PENDING_APPROVAL` with `estimatedQueueNumber`.
@@ -30,3 +32,5 @@ In healthcare platforms operating across India, patients require rapid discovery
 - Frictionless patient booking experience with zero upfront drop-off.
 - Total compliance with Google Play Store physical healthcare service billing policies.
 - Elimination of no-show confusion through receptionist telephone coordination and clear estimated queue tokens.
+- Resilient state handling across clinic venue switches preventing orphaned slot IDs.
+- Elimination of 401 unauthenticated mutation errors via upfront session gating.

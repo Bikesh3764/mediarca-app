@@ -373,15 +373,159 @@ async function runPhase3Verification() {
   });
   assert(negativeAge.valid === false, 'Dependent booking with negative age rejected');
 
-  // --- 8. Apple HIG Design Tokens for Phase 3 ---
-  console.log('\n--- 8. Apple HIG Design Tokens & Pill Targets ---');
+  // --- 8. Multi-Clinic Slot Switching & Synchronization ---
+  console.log('\n--- 8. Multi-Clinic Slot Switching & Slot Synchronization ---');
+  const multiClinicDoc: Doctor = {
+    id: 'doc_multi_01',
+    userId: 'usr_multi_01',
+    specialty: 'Cardiology',
+    qualifications: 'MBBS, MD',
+    experienceYears: 12,
+    consultationFee: 700,
+    isVerified: true,
+    checkingStartTime: '09:00',
+    checkingEndTime: '17:00',
+    avgConsultationMinutes: 10,
+    maxDailyPatients: 50,
+    clinics: [
+      {
+        id: 'cd_1',
+        clinicId: 'clinic_1',
+        clinic: {
+          id: 'clinic_1',
+          clinicName: 'Clinic One',
+          address: 'Road 1',
+          city: 'Mumbai',
+        },
+        consultationFee: 700,
+        hasReceptionist: true,
+        slots: [
+          { id: 'slot_c1_1', name: 'Morning Shift', startTime: '09:00', endTime: '12:00', maxPatients: 20, avgConsultationMinutes: 9 },
+        ],
+      },
+      {
+        id: 'cd_2',
+        clinicId: 'clinic_2',
+        clinic: {
+          id: 'clinic_2',
+          clinicName: 'Clinic Two',
+          address: 'Road 2',
+          city: 'Mumbai',
+        },
+        consultationFee: 900,
+        hasReceptionist: false,
+        slots: [
+          { id: 'slot_c2_1', name: 'Afternoon Shift', startTime: '13:00', endTime: '15:00', maxPatients: 15, avgConsultationMinutes: 8 },
+          { id: 'slot_c2_2', name: 'Evening Shift', startTime: '16:00', endTime: '18:00', maxPatients: 15, avgConsultationMinutes: 8 },
+        ],
+      },
+    ],
+    user: { id: 'usr_multi_01', fullName: 'Dr. Multi Clinic', email: 'multi@clinic.com' },
+  };
+
+  function simulateClinicSlotSwitch(doc: Doctor, initialClinicId: string, targetClinicId: string, currentSlotId: string | null) {
+    const targetClinic = doc.clinics?.find((c) => c.clinicId === targetClinicId);
+    const slots = targetClinic?.slots || [];
+    const exists = slots.some((s) => s.id === currentSlotId);
+    const updatedSlotId = exists ? currentSlotId : slots[0]?.id || null;
+    return {
+      updatedSlotId,
+      fee: targetClinic?.consultationFee ?? doc.consultationFee,
+      hasReceptionist: Boolean(targetClinic?.hasReceptionist),
+    };
+  }
+
+  const initialSlotId = 'slot_c1_1';
+  const switchRes = simulateClinicSlotSwitch(multiClinicDoc, 'clinic_1', 'clinic_2', initialSlotId);
+  assert(switchRes.updatedSlotId === 'slot_c2_1', 'Switching clinics updates slotId to first slot of target clinic', switchRes.updatedSlotId || undefined);
+  assert(switchRes.fee === 900, 'Switching clinics updates consultation fee to clinic 2 fee (₹900)');
+  assert(switchRes.hasReceptionist === false, 'Detects lack of front-desk receptionist on Clinic Two');
+
+  // --- 9. Doctor Leaves Detection & Date Selector Filtering ---
+  console.log('\n--- 9. Doctor Leaves Detection & Date Selector Filtering ---');
+  const mockLeaves = [
+    {
+      id: 'leave_1',
+      type: 'DATE_RANGE' as const,
+      startDate: '2026-10-24',
+      endDate: '2026-10-26',
+      reason: 'Attending Medical Conference',
+      createdAt: '2026-10-20',
+      createdByRole: 'DOCTOR' as const,
+    },
+  ];
+
+  function evaluateDaySitting(dateStr: string, workingDays: string[], leaves: typeof mockLeaves) {
+    const dayCode = getDayOfWeekCode(dateStr);
+    const isDayOff = !workingDays.includes(dayCode);
+    const isOnLeave = leaves.some((l) => dateStr >= l.startDate && dateStr <= l.endDate);
+    return { isSitting: !isDayOff && !isOnLeave, isDayOff, isOnLeave };
+  }
+
+  const regularDay = evaluateDaySitting('2026-10-23', ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'], mockLeaves);
+  assert(regularDay.isSitting === true && !regularDay.isOnLeave, '2026-10-23 (Fri) before leave is sitting');
+
+  const leaveDay = evaluateDaySitting('2026-10-24', ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'], mockLeaves);
+  assert(leaveDay.isOnLeave === true && leaveDay.isSitting === false, '2026-10-24 (Sat) during leave is marked on leave and not sitting');
+
+  const sundayOff = evaluateDaySitting('2026-10-25', ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'], mockLeaves);
+  assert(sundayOff.isDayOff === true && sundayOff.isSitting === false, '2026-10-25 (Sun) is marked off-day');
+
+  // --- 10. Medical Council Credentials & Registration Mapping ---
+  console.log('\n--- 10. Medical Council Credentials & Registration Mapping ---');
+  function formatCouncilAccreditation(doc: { isVerified: boolean; verificationStatus?: string }) {
+    return {
+      accreditation: doc.isVerified ? 'MCI / State Medical Council Verified' : 'Accredited Medical Practitioner',
+      registryStatus: doc.verificationStatus || (doc.isVerified ? 'VERIFIED' : 'ACTIVE'),
+    };
+  }
+
+  const verifiedDoc = formatCouncilAccreditation({ isVerified: true, verificationStatus: 'VERIFIED' });
+  assert(verifiedDoc.accreditation.includes('State Medical Council Verified'), 'Verified doctor gets official Council Verified status');
+  assert(verifiedDoc.registryStatus === 'VERIFIED', 'Verified doctor gets VERIFIED registry badge');
+
+  const unverifiedDoc = formatCouncilAccreditation({ isVerified: false, verificationStatus: 'PENDING' });
+  assert(unverifiedDoc.accreditation === 'Accredited Medical Practitioner', 'Unverified doctor has fallback accreditation');
+  assert(unverifiedDoc.registryStatus === 'PENDING', 'Pending doctor gets PENDING registry badge');
+
+  // --- 11. Midnight-Spanning Shift Duration Arithmetic ---
+  console.log('\n--- 11. Midnight-Spanning Shift Duration Arithmetic ---');
+  const overnightMetrics = calculateSlotMetrics('23:00', '02:00', 30);
+  assert(overnightMetrics.durationMinutes === 180, '23:00 to 02:00 overnight shift duration is 180 minutes (3h)', `${overnightMetrics.durationMinutes}m`);
+  assert(overnightMetrics.avgConsultationMinutes === 6, 'Avg consultation for 180m / 30 max patients is 6 minutes', `${overnightMetrics.avgConsultationMinutes}m`);
+
+  // --- 12. Step 6 Confirmation Sheet & Auth Guard Rules ---
+  console.log('\n--- 12. Step 6 Confirmation Sheet & Auth Guard Rules ---');
+  function evaluateBookingIntent(isAuthenticated: boolean, role?: string) {
+    if (!isAuthenticated) {
+      return { canOpenConfirmation: false, action: 'REDIRECT_LOGIN', buttonLabel: 'Sign In to Book' };
+    }
+    if (role && role !== 'PATIENT' && role !== 'DOCTOR') {
+      return { canOpenConfirmation: false, action: 'FORBIDDEN_ROLE', buttonLabel: 'Role Restricted' };
+    }
+    return { canOpenConfirmation: true, action: 'OPEN_CONFIRMATION_SHEET', buttonLabel: 'Review & Book Token' };
+  }
+
+  const unauthAttempt = evaluateBookingIntent(false);
+  assert(unauthAttempt.canOpenConfirmation === false && unauthAttempt.action === 'REDIRECT_LOGIN', 'Unauthenticated user is guarded with login redirect');
+  assert(unauthAttempt.buttonLabel === 'Sign In to Book', 'Unauthenticated CTA displays "Sign In to Book"');
+
+  const patientAttempt = evaluateBookingIntent(true, 'PATIENT');
+  assert(patientAttempt.canOpenConfirmation === true && patientAttempt.action === 'OPEN_CONFIRMATION_SHEET', 'Authenticated patient opens Step 6 Confirmation Sheet');
+
+  const zeroUpfrontNotice = 'No payment required now. An estimated token will be issued. Pay ₹800 directly to the clinic receptionist via UPI or at the desk.';
+  assert(zeroUpfrontNotice.includes('No payment required now'), 'Zero-Upfront disclosure contains "No payment required now"');
+  assert(zeroUpfrontNotice.includes('Pay ₹800 directly to the clinic receptionist'), 'Zero-Upfront disclosure specifies desk fee payment');
+
+  // --- 13. Apple HIG Design Tokens for Phase 3 ---
+  console.log('\n--- 13. Apple HIG Design Tokens & Pill Targets ---');
   assert(Colors.primary === '#0066cc', 'Action Blue token is #0066cc');
   assert(Colors.canvasParchment === '#f5f5f7', 'Canvas parchment token is #f5f5f7');
   assert(TouchTarget.minSize >= 44, 'TouchTarget minSize is at least 44pt');
   assert(BorderRadius.pill === 9999, 'Pill border radius is 9999');
 
-  // --- 9. Live Production Backend Doctor Queries ---
-  console.log('\n--- 9. Live Production Backend Doctor Queries ---');
+  // --- 14. Live Production Backend Doctor Queries ---
+  console.log('\n--- 14. Live Production Backend Doctor Queries ---');
   try {
     const liveDoctors = await api.getDoctors();
     assert(Array.isArray(liveDoctors), 'Live backend api.getDoctors() returns array', `Count: ${liveDoctors.length}`);

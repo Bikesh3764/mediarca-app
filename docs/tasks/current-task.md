@@ -1,4 +1,4 @@
-# Current Task: Phase 3 — Patient Discovery, Doctor Profiles & Step-by-Step Booking
+# Current Task: Phase 4 — Live Queue Pass, Receptionist Direct Dial & Hardware Camera QR Check-In
 
 **Target Directory:** `c:\Users\Bikesh Ray\OneDrive\Desktop\MediArca-App`  
 **Reference Web App:** `c:\Users\Bikesh Ray\OneDrive\Desktop\MediArca`  
@@ -9,45 +9,50 @@
 
 ## 1. Objectives & Scope
 
-Execute Phase 3 of the MediArca native mobile application for the Google Play Store and iOS App Store:
+Execute Phase 4 of the MediArca native mobile application for the Google Play Store and iOS App Store:
 
-1. **Patient Discovery Screen (`src/app/explore.tsx` & `src/app/doctors/index.tsx`)**:
-   - Instant 250ms debounced search index matching simultaneously across doctor name, specialty, clinic facility name, and city.
-   - Pinned Apple HIG horizontal specialty pill carousel (`SpecialtyPillCarousel.tsx`) with 44pt touch targets supporting 34 medical specialties.
-   - Doctor discovery cards (`DoctorCard.tsx`) displaying photo/monogram avatar, verified shield badge, degrees formatted via `formatDoctorDegrees`, experience years, clinic affiliation, consultation fee in ₹, and real-time cabin badge.
-   - Pull-to-refresh (`RefreshControl`), empty search state with filter reset, and error retry state.
+1. **Live Queue Pass Screen (`src/app/(tabs)/passes.tsx` & `src/app/passes.tsx`)**:
+   - Segmented tabs: `Active Passes` vs `Past Visits` with count badges and native `RefreshControl` pull-to-refresh.
+   - Authentication guard gating access with Apple HIG "Sign In to View Passes" prompt and redirect to `/(auth)/login`.
+   - Empty state guidance with direct CTA routing to Doctor Discovery (`/explore`).
 
-2. **Doctor Detail Screen (`src/app/doctors/[id].tsx`)**:
-   - Comprehensive doctor bio, specialty, and formatted medical qualifications.
-   - Sleek 7-day Apple HIG circular letter discs (`M T W T F S S`) via `WeekdayDisplay.tsx`, highlighting practicing days, off days, and active today indicator with IST date arithmetic.
-   - OPD Shift cards with formatted 12-hour timings (`format12Hour`), patient capacity limits, average consultation minutes, and leave status.
-   - Affiliated clinics list with street addresses and one-tap telephone dialer (`Linking.openURL(toTelUri(clinic.phone))`).
-   - Sticky bottom bar with consultation fee (`₹`) and 44pt pill "Book Token" CTA button.
+2. **Apple HIG Live Ticket Card (`src/components/queue/LiveQueueTicket.tsx`)**:
+   - Big bold live ticket card distinguishing official assigned tokens (`#X`) from pre-approval tokens (`#X (Estimated)`).
+   - Doctor details with photo/monogram avatar, specialty, clinic venue, and real-time cabin presence badge (`CabinBadge`).
+   - 3-tile Apple HIG metadata grid: Date (with `Today` badge), Shift window (cleaned via `cleanSlotName`), and Est. Time / Status (`formatWaitTime`).
+   - Dependent patient details banner when `isForOther` is true.
+   - Physical arrival check-in status card: "Checked In at Clinic" with active presence dot, or "Not Checked In" with "Scan Clinic QR" CTA.
+   - Cancel / withdraw token action with alert confirmation.
 
-3. **Step-by-Step Booking Flow (`src/app/book/[id].tsx`)**:
-   - Step 1: Clinic venue selector for multi-facility doctors.
-   - Step 2: Date selector with IST arithmetic (`getLocalDateString`, `getTomorrowDateString`, `getDayOfWeekCode`), disabling non-practice days and doctor leave days.
-   - Step 3: Shift selector with live slot capacity indicators (`Available`, `Ended`, `Full`) and dynamic queue preview metrics (`api.getQueuePreview`).
-   - Step 4: Patient information supporting "Book for Myself" (pre-filled from session) vs. "Book for Dependent" with strict age validation (0–125) and gender selection.
-   - Step 5: Reason for visit and symptoms input fields.
-   - Step 6: Confirmation sheet strictly enforcing the Zero-Upfront Payment Policy:
-     - Clear disclosure: *"No payment required now. An estimated token will be issued. Pay ₹XXX directly to the clinic receptionist via UPI or at the desk."*
-     - Submits payload to live backend `api.bookAppointment` generating `PENDING_APPROVAL` with `estimatedQueueNumber`.
-     - Confirmation screen with token pass, receptionist telephone dialer, clinic address, and next instructions.
+3. **Queue Telemetry Engine (`src/components/queue/QueueTelemetryCard.tsx`)**:
+   - Visual telemetry flow showing currently served token (`Serving: Queue #X`), patients ahead of user (`patientsAway`), and dynamic wait time via `formatWaitTime`.
+   - Active consultation callout banner when patient's token is actively called or consultation is in progress.
+   - Cabin status alerts when doctor stepped out (with estimated return time) or not in cabin.
 
-4. **Reusable UI Components**:
-   - `src/components/common/CabinBadge.tsx`: Apple HIG pill badge for `IN_CABIN`, `STEPPED_OUT` (with dynamic return time), and `NOT_IN_CABIN`.
-   - `src/components/common/WeekdayDisplay.tsx`: Circular 7-day discs with today's presence ring and leave badge.
-   - `src/components/discovery/SpecialtyPillCarousel.tsx`: Horizontal specialty carousel with active fill state and 44pt touch targets.
-   - `src/components/discovery/DoctorCard.tsx`: Tactile doctor card with monogram fallback, verified badge, fee, and booking CTA.
+4. **One-Tap Receptionist Direct Dialing (`src/components/queue/ReceptionistCallCard.tsx`)**:
+   - Assigned clinic receptionist name and one-tap native telephone button (`Linking.openURL(toTelUri(receptionistPhone))`).
+   - Clear disclosure explaining the Zero-Upfront Payment policy: patients can call the receptionist to pay via UPI over call or pay at the desk upon arrival to confirm their token.
 
-5. **Documentation & Architecture Decision Records**:
-   - Created ADR `docs/decisions/007-patient-discovery-and-zero-upfront-booking.md`.
+5. **Adaptive Polling Engine (`src/services/queueUtils.ts` -> `calculatePollingInterval`)**:
+   - 0ms (paused) when app is backgrounded (`AppState.currentState !== 'active'`) or zero active passes exist, eliminating unnecessary battery and network drain.
+   - 10s (10,000ms) high-frequency polling when patient is near the front of the queue (`patientsAway <= 2`) during an active clinic shift.
+   - 15s (15,000ms) standard foreground polling during an active clinic shift.
+   - 60s (60,000ms) low-frequency polling when the shift has not started, has ended, or for future-dated tickets.
+
+6. **Hardware Camera QR Check-In Modal (`src/components/queue/CameraQrScannerModal.tsx`)**:
+   - Native 60fps camera viewfinder using `expo-camera` (`CameraView` with `barcodeScannerSettings={{ barcodeTypes: ['qr'] }}`).
+   - Animated laser scan line (`Animated.loop`), flashlight/torch toggle (`enableTorch`), and close button.
+   - Decodes QR payloads supporting JSON (`{"clinicId": "...", "checkinCode": "..."}`), URL parameters (`/clinic-checkin?clinicId=...&code=...`), and raw IDs via `parseQrPayload`.
+   - Native tactile haptic feedback (`expo-haptics`) upon successful barcode detection.
+   - Graceful permission degradation: UI with "Grant Permission" and "Open Settings" (`Linking.openSettings()`), with manual 6-character check-in code input fallback.
+
+7. **Documentation & Architecture Decision Records**:
+   - Created ADR `docs/decisions/008-live-queue-ticket-and-hardware-camera-checkin.md`.
    - Updated `PROJECT.md` and `docs/tasks/current-task.md`.
 
-6. **Automated Verification Suite**:
-   - Built `scripts/verify-phase3.ts` testing 87 assertions across doctor search, specialty mapping, degree cleaning, cabin presence, weekday arithmetic, slot evaluation, booking payload validation, multi-clinic slot switching, doctor leave handling, medical council accreditation mapping, midnight-spanning shifts, Step 6 confirmation sheet/auth guards, and live backend queries.
-   - Total test assertions across all suites: 212/212 tests passing (100%).
+8. **Automated Verification Suite**:
+   - Built `scripts/verify-phase4.ts` testing 74 assertions across adaptive polling calculations (10s/15s/60s/0s), wait time formatting, QR payload decoding, ticket state lifecycle, telephone URI formatting, manual check-in code validation, Apple HIG design tokens, and live backend queue queries.
+   - Total test assertions across all suites: 286/286 tests passing (100%).
 
 ---
 
@@ -57,9 +62,12 @@ Execute Phase 3 of the MediArca native mobile application for the Google Play St
 - [x] Phase 1 Automated Suite: `npm run test:verify:phase1` passes 64/64 tests (100%).
 - [x] Phase 2 Automated Suite: `npm run test:verify:phase2` passes 61/61 tests (100%).
 - [x] Phase 3 Automated Suite: `npm run test:verify:phase3` passes 87/87 tests (100%).
-- [x] All Tests Suite: `npm run test:verify:all` passes 212/212 assertions (100%).
-- [x] Live Render backend `/doctors` endpoint queries live doctors from Supabase.
-- [x] Live Render backend `/doctors/:id` endpoint resolves doctor profile.
-- [x] Live Render backend `/appointments/queue-preview` computes next queue token and patients ahead.
-- [x] Zero-Upfront Payment Policy disclosure clearly integrated.
-- [x] Apple HIG 44pt touch targets and circular discs verified.
+- [x] Phase 4 Automated Suite: `npm run test:verify:phase4` passes 74/74 tests (100%).
+- [x] All Tests Suite: `npm run test:verify:all` passes 286/286 assertions (100%).
+- [x] Adaptive polling intervals verified: 10s (front of queue <= 2), 15s (active shift), 60s (idle/future), 0s (backgrounded).
+- [x] QR payload parser verified: JSON, URLs, query parameters, URL-encoded strings, raw IDs.
+- [x] One-tap receptionist phone dialer (`Linking.openURL(toTelUri)`) and formatting verified.
+- [x] Native hardware camera QR viewfinder (`expo-camera`), torch toggle, and tactile haptic vibration (`expo-haptics`) configured.
+- [x] Manual check-in code fallback input implemented for zero-friction arrival verification.
+- [x] Apple HIG 44pt touch targets and full pill buttons verified.
+- [x] Live Render backend `/appointments/queue-preview` queries operational.

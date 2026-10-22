@@ -30,6 +30,48 @@ Module.prototype.require = function (id) {
         openURL: async () => {},
         canOpenURL: async () => true,
       },
+      AppState: {
+        currentState: 'active',
+        addEventListener: () => ({ remove: () => {} }),
+      },
+      Animated: {
+        Value: class {
+          constructor(val) { this._val = val; }
+          setValue(val) { this._val = val; }
+          interpolate() { return this; }
+        },
+        timing: () => ({ start: (cb) => cb && cb({ finished: true }) }),
+        loop: () => ({ start: () => {}, stop: () => {} }),
+        sequence: () => ({ start: () => {} }),
+      },
+      Modal: 'Modal',
+      RefreshControl: 'RefreshControl',
+      ScrollView: 'ScrollView',
+      Pressable: 'Pressable',
+    };
+  }
+
+  if (id === 'expo-camera') {
+    return {
+      CameraView: 'CameraView',
+      useCameraPermissions: () => [{ granted: true, canAskAgain: true }, async () => ({ granted: true })],
+    };
+  }
+
+  if (id === 'expo-haptics') {
+    return {
+      notificationAsync: async () => {},
+      impactAsync: async () => {},
+      NotificationFeedbackType: {
+        Success: 'success',
+        Warning: 'warning',
+        Error: 'error',
+      },
+      ImpactFeedbackStyle: {
+        Light: 'light',
+        Medium: 'medium',
+        Heavy: 'heavy',
+      },
     };
   }
 

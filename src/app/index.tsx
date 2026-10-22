@@ -267,23 +267,67 @@ export default function HomeScreen() {
       </View>
 
       {/* Phase 3: Patient Discovery & Booking Action Card */}
+      {/* Phase 4: Live Queue Ticket & QR Check-In Action Card */}
       <View style={styles.card}>
         <View style={styles.cardHeaderRow}>
-          <Text style={styles.sectionTitle}>Doctor Discovery & Booking</Text>
-          <AppBadge variant="primary" label="Phase 3 Live" size="sm" />
+          <Text style={styles.sectionTitle}>Live Queue Passes & Check-In</Text>
+          <AppBadge variant="primary" label="Phase 4 Live" size="sm" />
         </View>
         <Text style={styles.sectionSubtitle}>
-          Search verified doctors, inspect real-time cabin presence, and book OPD queue tokens with Zero-Upfront Payment policy.
+          Real-time queue ticket telemetry, adaptive polling (10s/15s/60s), one-tap receptionist calling, and native camera QR check-in.
         </Text>
 
         <TouchableOpacity
           style={styles.signInPrimaryButton}
-          onPress={() => router.push('/explore')}
+          onPress={() => router.push('/passes')}
           activeOpacity={0.85}
         >
-          <Ionicons name="search-outline" size={18} color={Colors.inkWhite} />
-          <Text style={styles.signInPrimaryText}>Find Doctors & Book Tokens</Text>
+          <Ionicons name="ticket-outline" size={18} color={Colors.inkWhite} />
+          <Text style={styles.signInPrimaryText}>View Active Queue Passes</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Phase 4 Deliverables Checklist Card */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Phase 4 Deliverables</Text>
+        <Text style={styles.sectionSubtitle}>
+          Live Queue Ticket, adaptive polling engine, receptionist phone dialer, and native camera QR standee scanner.
+        </Text>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Live Queue Pass Screen (Active Passes vs Past Visits) with Pull-to-Refresh</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>LiveQueueTicket Card with Est. vs Confirmed Tokens & Doctor Cabin Sync</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>QueueTelemetryCard with Serving Token, Patients Ahead & formatWaitTime</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>ReceptionistCallCard with One-Tap Native Dialer (Linking.openURL)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>CameraQrScannerModal with expo-camera, Laser Scan Line & Torch Toggle</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Adaptive Polling Engine (10s Front-of-Queue, 15s Shift, 60s Idle, 0s Background)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>QR Payload Decoding (JSON, URLs, query params) & Haptic Vibration</Text>
+        </View>
       </View>
 
       {/* Phase 3 Deliverables Checklist Card */}

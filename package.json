@@ -6,10 +6,12 @@
     "@expo/ui": "~58.0.22",
     "@expo/vector-icons": "^15.0.2",
     "expo": "~58.0.17",
+    "expo-camera": "~58.0.12",
     "expo-constants": "~58.0.13",
     "expo-device": "~58.0.5",
     "expo-font": "~58.0.9",
     "expo-glass-effect": "~58.0.4",
+    "expo-haptics": "~58.0.7",
     "expo-image": "~58.0.16",
     "expo-linking": "~58.0.14",
     "expo-router": "~58.0.25",
@@ -41,11 +43,12 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test:verify": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase3.ts",
+    "test:verify": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase4.ts",
     "test:verify:phase1": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase1.ts",
     "test:verify:phase2": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase2.ts",
     "test:verify:phase3": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase3.ts",
-    "test:verify:all": "npm run test:verify:phase1 && npm run test:verify:phase2 && npm run test:verify:phase3"
+    "test:verify:phase4": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase4.ts",
+    "test:verify:all": "npm run test:verify:phase1 && npm run test:verify:phase2 && npm run test:verify:phase3 && npm run test:verify:phase4"
   },
   "private": true
 }

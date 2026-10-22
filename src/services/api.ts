@@ -42,6 +42,14 @@ export {
 };
 export type { SafeFetchOptions } from './safeFetch';
 
+export {
+  formatWaitTime,
+  calculatePollingInterval,
+  parseQrPayload,
+  getPassDisplayData,
+} from './queueUtils';
+export type { PollingIntervalConfig, PassDisplayData } from './queueUtils';
+
 const isDevFallback = Boolean(
   typeof __DEV__ !== 'undefined' && __DEV__ && process.env.EXPO_PUBLIC_ENABLE_DEMO_FALLBACK === 'true'
 );

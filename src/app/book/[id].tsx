@@ -432,10 +432,19 @@ export default function BookAppointmentScreen() {
             {/* Bottom Actions */}
             <TouchableOpacity
               style={styles.doneButton}
+              onPress={() => router.replace('/passes')}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="ticket-outline" size={18} color={Colors.inkWhite} style={{ marginRight: 6 }} />
+              <Text style={styles.doneButtonText}>View My Queue Pass</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.doneButton, { backgroundColor: Colors.canvasParchment, marginTop: 10 }]}
               onPress={() => router.replace('/explore')}
               activeOpacity={0.85}
             >
-              <Text style={styles.doneButtonText}>Done</Text>
+              <Text style={[styles.doneButtonText, { color: Colors.ink }]}>Back to Discovery</Text>
             </TouchableOpacity>
           </AppCard>
         </ScrollView>

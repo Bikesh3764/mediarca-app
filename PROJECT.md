@@ -20,7 +20,7 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 | **Phase 1** | **Scaffold, Design Tokens & Core Service Layer**: Expo SDK 58 setup, Apple HIG tokens (`constants/theme.ts`), API service layer (`services/api.ts`, `safeFetch.ts`), IST date math utilities, Safe Area Layout, Health Ping verification, Full Markdown Documentation & GitHub repo sync. | None | **COMPLETED** |
 | **Phase 2** | **Multi-Role Authentication & Secure Storage**: Hardware-backed `expo-secure-store`, multi-role login (Patient, Doctor, Receptionist, Clinic), `+91` phone validation, 6-digit email OTP screen with 60s countdown, reusable Apple HIG UI components, automated verification suite. | Phase 1 | **COMPLETED** |
 | **Phase 3** | **Patient Discovery, Doctor Profiles & Step Booking**: Debounced specialty search, live cabin presence badges, weekly practice discs (`M T W T F S S`), step-by-step booking sheet, zero-upfront fee disclosure. | Phase 2 | **COMPLETED** |
-| **Phase 4** | **Live Queue Pass, Receptionist Direct Dial & QR Check-In**: Live Queue Pass card, dynamic queue polling (10s/15s/60s), one-tap receptionist phone dialer (`Linking.openURL`), native 60fps camera QR scanner (`expo-camera`), haptic vibration (`expo-haptics`). | Phase 3 | Queued |
+| **Phase 4** | **Live Queue Pass, Receptionist Direct Dial & QR Check-In**: Live Queue Pass card, dynamic queue polling (10s/15s/60s), one-tap receptionist phone dialer (`Linking.openURL`), native 60fps camera QR scanner (`expo-camera`), haptic vibration (`expo-haptics`). | Phase 3 | **COMPLETED** |
 | **Phase 5** | **Doctor Console, Live OPD Queue & Consultation Room**: Doctor live queue screen, sticky cabin presence toggle with return time modal, consultation room with vitals entry (BP, Pulse, Temp, Weight), shift and leave management. | Phase 4 | Queued |
 | **Phase 6** | **Receptionist Multi-Doctor Desk & Walk-In Dispenser**: Multi-doctor queue dashboard, online appointment approvals (`PENDING_APPROVAL` → `WAITING`), walk-in token dispenser form, counter ticket scanner. | Phase 5 | Queued |
 | **Phase 7** | **Clinic/Admin Portals, Play Store Assets & EAS Build**: Clinic management, QR standee generator/export, legal compliance pages (Privacy Policy, Terms), self-serve account deletion, EAS cloud build configuration (`eas.json`), production `.aab` generation. | Phase 6 | Queued |
@@ -109,7 +109,28 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 
 ---
 
-## 7. Complete Documentation Index
+## 7. Phase 4 Verification Record
+
+- **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
+- **Automated Verification Suite (`scripts/verify-phase4.ts`)**: 74/74 passed (100% pass rate).
+- **All Suites (`npm run test:verify:all`)**: 286/286 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), Phase 3 (87), and Phase 4 (74).
+- **Live Queue Pass & Ticket Architecture**:
+  - Built `src/app/(tabs)/passes.tsx` and `src/app/passes.tsx` with segmented tabs (`Active Passes` vs `Past Visits`), pull-to-refresh (`RefreshControl`), and authentication gating.
+  - Built `LiveQueueTicket.tsx` featuring big bold tokens (`#X` vs `#X (Estimated)`), real-time cabin presence sync (`CabinBadge`), 3-tile metadata grid (Date, Shift, Est. Time / Status), and arrival check-in action.
+  - Built `QueueTelemetryCard.tsx` displaying live queue serving token, patients ahead (`patientsAway`), and dynamic wait time via `formatWaitTime`.
+  - Built `ReceptionistCallCard.tsx` with one-tap native telephone button (`Linking.openURL(toTelUri(receptionistPhone))`) enabling patients to pay via UPI or coordinate arrival.
+- **Adaptive Polling Engine**:
+  - Implemented `calculatePollingInterval`: 0ms (paused) when app is backgrounded (`AppState !== 'active'`) or 0 active passes; 10s (10,000ms) when near front of queue (`patientsAway <= 2`) during an active clinic shift; 15s (15,000ms) during an active clinic shift; 60s (60,000ms) when shift is inactive or for future-dated tickets.
+- **Hardware Camera QR Check-In (`CameraQrScannerModal`)**:
+  - Viewfinder with `expo-camera` (`CameraView` with `barcodeScannerSettings={{ barcodeTypes: ['qr'] }}`).
+  - Animated laser scan line (`Animated.loop`), flashlight/torch toggle, and close button.
+  - Multi-format payload decoding: JSON (`{"clinicId": "...", "checkinCode": "..."}`), URL parameters (`/clinic-checkin?clinicId=...&code=...`), and raw IDs via `parseQrPayload`.
+  - Tactile haptic feedback via `expo-haptics` (`Haptics.notificationAsync`).
+  - Clear permission handling with settings redirect (`Linking.openSettings()`) and manual 6-character check-in code input fallback.
+
+---
+
+## 8. Complete Documentation Index
 
 - **Product Specification**: [MediArca_Feature_Specification.md](file:///./MediArca_Feature_Specification.md)
 - **Mobile Design System**: [MOBILE_DESIGN.md](file:///./MOBILE_DESIGN.md)
@@ -127,3 +148,4 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
   - [ADR 005: Direct Connection to Live Render Backend](file:///./docs/decisions/005-direct-render-production-wiring.md)
   - [ADR 006: Hardware-Backed SecureStore Session Management](file:///./docs/decisions/006-secure-store-session-management.md)
   - [ADR 007: Patient Discovery & Zero-Upfront Token Booking](file:///./docs/decisions/007-patient-discovery-and-zero-upfront-booking.md)
+  - [ADR 008: Live Queue Ticket & Hardware Camera Check-In](file:///./docs/decisions/008-live-queue-ticket-and-hardware-camera-checkin.md)

@@ -13,6 +13,8 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { Colors, Spacing, BorderRadius, Typography, TouchTarget, Shadows } from '@/constants/theme';
 import { api, getLocalDateString } from '@/services/api';
 import { ENV } from '@/constants/config';
+import { useAuth } from '@/context/AuthContext';
+import { AppBadge } from '@/components/ui/AppBadge';
 
 interface HealthTelemetry {
   apiStatus: 'ONLINE' | 'OFFLINE' | 'CHECKING';
@@ -27,6 +29,7 @@ interface HealthTelemetry {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { user, isAuthenticated, role, logout } = useAuth();
   const [telemetry, setTelemetry] = useState<HealthTelemetry>({
     apiStatus: 'CHECKING',
     database: 'Checking...',
@@ -208,36 +211,96 @@ export default function HomeScreen() {
         )}
       </TouchableOpacity>
 
-      {/* Phase 1 Verification Checklist Card */}
+      {/* Phase 2: Live Authentication Portal Card */}
       <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Phase 1 Deliverables</Text>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.sectionTitle}>Auth & Session State</Text>
+          {isAuthenticated && role ? (
+            <AppBadge role={role} label={role} size="sm" />
+          ) : (
+            <AppBadge variant="neutral" label="Unauthenticated" size="sm" />
+          )}
+        </View>
+
+        {isAuthenticated && user ? (
+          <View style={styles.userProfileBlock}>
+            <View style={styles.userProfileRow}>
+              <View style={styles.userAvatar}>
+                <Text style={styles.userAvatarText}>
+                  {user.fullName ? user.fullName[0].toUpperCase() : 'U'}
+                </Text>
+              </View>
+              <View style={styles.userInfoCol}>
+                <Text style={styles.userNameText}>{user.fullName}</Text>
+                <Text style={styles.userSubText}>{user.email}</Text>
+                {user.phone ? <Text style={styles.userPhoneText}>{user.phone}</Text> : null}
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.signOutButton}
+              onPress={async () => {
+                await logout();
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="log-out-outline" size={16} color={Colors.danger} />
+              <Text style={styles.signOutButtonText}>Sign Out from Device</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={styles.authActionBlock}>
+            <Text style={styles.sectionSubtitle}>
+              Hardware-backed SecureStore session management with multi-role support.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.signInPrimaryButton}
+              onPress={() => router.push('/(auth)/login')}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="key-outline" size={18} color={Colors.inkWhite} />
+              <Text style={styles.signInPrimaryText}>Launch Authentication Portal</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+
+      {/* Phase 2 Verification Checklist Card */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Phase 2 Deliverables</Text>
         <Text style={styles.sectionSubtitle}>
-          Core engine and architectural foundation ready for Google Play Store.
+          Secure authentication, session persistence, and Apple HIG auth screens.
         </Text>
 
         <View style={styles.checklistRow}>
           <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-          <Text style={styles.checklistText}>Expo SDK 58 & TypeScript Strict Setup</Text>
+          <Text style={styles.checklistText}>expo-secure-store Hardware Token Persistence</Text>
         </View>
 
         <View style={styles.checklistRow}>
           <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-          <Text style={styles.checklistText}>Apple HIG Theme Tokens & 44px Touch Targets</Text>
+          <Text style={styles.checklistText}>AuthContext with 5 Portal Roles & Cold Hydration</Text>
         </View>
 
         <View style={styles.checklistRow}>
           <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-          <Text style={styles.checklistText}>2,500+ Lines API Layer & IST Date Arithmetic</Text>
+          <Text style={styles.checklistText}>Apple HIG Login Screen (+91 Mobile & Password Toggle)</Text>
         </View>
 
         <View style={styles.checklistRow}>
           <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-          <Text style={styles.checklistText}>SafeFetch Engine with Zero Mutation Retries</Text>
+          <Text style={styles.checklistText}>Role-Aware Signup Screen & Regulatory Terms</Text>
         </View>
 
         <View style={styles.checklistRow}>
           <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
-          <Text style={styles.checklistText}>Target Android SDK 34+ (Android 14/15)</Text>
+          <Text style={styles.checklistText}>6-Digit Email OTP Screen with 60s Countdown</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Reusable AppCard, AppButton, AppInput, AppBadge, ScreenWrapper</Text>
         </View>
       </View>
 
@@ -421,5 +484,78 @@ const styles = StyleSheet.create({
     color: Colors.ink,
     fontSize: 14,
     flex: 1,
+  },
+  userProfileBlock: {
+    marginTop: Spacing.two,
+  },
+  userProfileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.three,
+  },
+  userAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.pill,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.three,
+  },
+  userAvatarText: {
+    color: Colors.inkWhite,
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  userInfoCol: {
+    flex: 1,
+  },
+  userNameText: {
+    ...Typography.bodyBold,
+    color: Colors.ink,
+  },
+  userSubText: {
+    ...Typography.caption,
+    color: Colors.inkMuted80,
+    marginTop: 2,
+  },
+  userPhoneText: {
+    ...Typography.caption,
+    color: Colors.primary,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  signOutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    backgroundColor: Colors.dangerLight,
+    borderRadius: BorderRadius.pill,
+    minHeight: TouchTarget.minHeight,
+  },
+  signOutButtonText: {
+    ...Typography.captionBold,
+    color: Colors.danger,
+  },
+  authActionBlock: {
+    marginTop: Spacing.two,
+  },
+  signInPrimaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.pill,
+    minHeight: TouchTarget.minHeight,
+    paddingHorizontal: Spacing.four,
+    marginTop: Spacing.two,
+    ...Shadows.card,
+  },
+  signInPrimaryText: {
+    ...Typography.bodyBold,
+    color: Colors.inkWhite,
   },
 });

@@ -1,4 +1,4 @@
-# Current Task: Phase 1 — Project Scaffolding, Mobile Design System & Core Service Layer
+# Current Task: Phase 2 — Multi-Role Authentication, Secure Storage & 6-Digit Email OTP
 
 **Target Directory:** `c:\Users\Bikesh Ray\OneDrive\Desktop\MediArca-App`  
 **Reference Web App:** `c:\Users\Bikesh Ray\OneDrive\Desktop\MediArca`  
@@ -9,33 +9,40 @@
 
 ## 1. Objectives & Scope
 
-Execute Phase 1 of the MediArca native mobile application for the Google Play Store and iOS App Store:
+Execute Phase 2 of the MediArca native mobile application for the Google Play Store and iOS App Store:
 
-1. **Scaffold Expo & React Native Project**:
-   - Initialize Expo SDK 58 project with TypeScript strict mode, Expo Router, `@expo/vector-icons`, and `react-native-safe-area-context`.
-   - Configure Android package `com.mediarca.app`, version `1.0.0`, version code `1`, and permissions (`CAMERA`, `VIBRATE`).
-2. **Apple HIG Design Tokens & Theme System**:
-   - Implement `src/constants/theme.ts` adhering strictly to `MOBILE_DESIGN.md`: Action Blue (`#0066cc`), parchment canvas (`#f5f5f7`), ink (`#1d1d1f`), and 44x44pt touch targets (`TouchTarget.minSize`).
-3. **Core API & Service Layer**:
-   - Port `safeFetch.ts` with bounded 15s timeouts and strict 0-retry policy for mutations.
-   - Port `api.ts` with 2,500+ lines of TypeScript models for 11 Prisma entities, clinic slot duration logic, and IST date/time utilities.
-   - Port Indian geographic (`indiaStates.ts`) and telephone (`phoneUtils.ts`) utilities.
-4. **Base Layout & Verification UI**:
-   - Implement `SafeAreaViewContainer.tsx`, `Header.tsx`, and `StatusBadge.tsx`.
-   - Build real-time live production health telemetry screen in `src/app/index.tsx`.
-5. **Comprehensive Markdown Documentation**:
-   - Create and maintain full repository documentation mirroring the web project: `README.md`, `MOBILE_DESIGN.md`, `ARCHITECTURE.md`, `PROJECT.md`, `IMPLEMENTATION.md`, `AGENTS.md`, `MediArca_Feature_Specification.md`, and `docs/` hierarchy (`architecture.md`, `known-issues.md`, `current-task.md`, and ADRs 001–005).
-6. **Git & GitHub Remote Synchronization**:
-   - Track repository under GitHub repo `mediarca-app` (`https://github.com/Bikesh3764/mediarca-app.git`).
+1. **Hardware-Backed Session Storage**:
+   - Install and configure `expo-secure-store` with Android KeyStore and iOS Keychain encryption (`SecureStore.AFTER_FIRST_UNLOCK`).
+   - Implement `src/utils/secureStore.ts` with web/mock fallbacks and corrupted payload auto-recovery.
+2. **Multi-Role Authentication Engine (`AuthContext`)**:
+   - Build `src/context/AuthContext.tsx` supporting 5 roles: `PATIENT`, `DOCTOR`, `RECEPTIONIST`, `CLINIC`, `ADMIN`.
+   - Wired methods: `login(emailOrPhone, password, role)`, `signup(...)`, `verifyOtp(email, otp, role)`, `resendOtp(email, role)`, `logout()`, `refreshUser()`, `updateUser(...)`.
+   - Optimistic session hydration on cold start with strict 401 token invalidation.
+3. **Apple HIG Design System UI Components**:
+   - `AppCard.tsx`: Alternating canvas surfaces with hairline borders and subtle Apple elevation.
+   - `AppButton.tsx`: Full pill action buttons (`borderRadius: 9999`), 44pt minimum touch target, active tactile press state.
+   - `AppInput.tsx`: 44pt touch target inputs with fixed `+91` Indian mobile badge, password visibility eye toggle, and validation callouts.
+   - `AppBadge.tsx`: Semantic status and role-specific badges.
+   - `ScreenWrapper.tsx`: Safe area insets, keyboard-avoiding views, and pull-to-refresh integration.
+4. **Sleek Authentication Screens**:
+   - `src/app/(auth)/login.tsx`: Role switcher tabs (`PATIENT`, `DOCTOR`, `RECEPTIONIST`, `CLINIC`), email / +91 mobile toggle, password input with eye toggle, error callout, and Google Sign-In button.
+   - `src/app/(auth)/signup.tsx`: Role-aware fields (Doctor medical credentials, Clinic facility details, Patient biological gender), +91 mobile validation, and regulatory healthcare declarations.
+   - `src/app/(auth)/verify-otp.tsx`: Auto-advancing 6-digit input boxes, 60-second countdown timer, resend button with cooldown handling, and verification calling `api.verifyEmailOtp`.
+5. **Documentation & Architecture Decision Records**:
+   - Created ADR `docs/decisions/006-secure-store-session-management.md`.
+   - Updated `PROJECT.md` and `docs/tasks/current-task.md`.
+6. **Automated Verification Suite**:
+   - Built `scripts/verify-phase2.ts` testing 58 assertions across token serialization, corrupted JSON recovery, phone validation, OTP timer arithmetic, and live backend auth ping.
 
 ---
 
 ## 2. Verification Checklist
 
 - [x] TypeScript compilation: `npm run typecheck` (`tsc --noEmit`) passes with 0 errors.
-- [x] Android Hermes JS bundle compilation: `npx expo export -p android` bundles 1,710 modules into production bytecode (`.hbc`) with 0 errors.
-- [x] Automated test suite: `npm run test:verify` passes 100% of assertion checks.
-- [x] Live Render backend `/healthz` ping returns `status: ok`, `database: connected`, `redis: connected`.
-- [x] Live Render API `/api/health` returns `status: ok`.
-- [x] Live Supabase doctor and clinic roster query returns active database records.
-- [x] GitHub repository created and updated: `https://github.com/Bikesh3764/mediarca-app`.
+- [x] Phase 1 Automated Suite: `npm run test:verify:phase1` passes 64/64 tests (100%).
+- [x] Phase 2 Automated Suite: `npm run test:verify:phase2` passes 58/58 tests (100%).
+- [x] All Tests Suite: `npm run test:verify:all` passes 122/122 assertions (100%).
+- [x] Live Render backend `/auth/login` rejects invalid credentials with 401 (guard active).
+- [x] Live Render backend `/auth/register` rejects malformed inputs with 400 (validation active).
+- [x] Live Render backend `/auth/verify-otp` active and operational.
+- [x] Hardware SecureStore persistence validated with cold-start rehydration.

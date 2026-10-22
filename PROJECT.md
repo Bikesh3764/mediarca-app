@@ -18,7 +18,7 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 | Milestone | Scope & Deliverables | Dependencies | Status |
 | :---: | :--- | :---: | :---: |
 | **Phase 1** | **Scaffold, Design Tokens & Core Service Layer**: Expo SDK 58 setup, Apple HIG tokens (`constants/theme.ts`), API service layer (`services/api.ts`, `safeFetch.ts`), IST date math utilities, Safe Area Layout, Health Ping verification, Full Markdown Documentation & GitHub repo sync. | None | **COMPLETED** |
-| **Phase 2** | **Multi-Role Authentication & Secure Storage**: Hardware-backed `expo-secure-store`, multi-role login (Patient, Doctor, Receptionist, Clinic), `+91` phone validation, 6-digit email OTP screen, Google Sign-In setup. | Phase 1 | Queued |
+| **Phase 2** | **Multi-Role Authentication & Secure Storage**: Hardware-backed `expo-secure-store`, multi-role login (Patient, Doctor, Receptionist, Clinic), `+91` phone validation, 6-digit email OTP screen with 60s countdown, reusable Apple HIG UI components, automated verification suite. | Phase 1 | **COMPLETED** |
 | **Phase 3** | **Patient Discovery, Doctor Profiles & Step Booking**: Debounced specialty search, live cabin presence badges, weekly practice discs (`M T W T F S S`), step-by-step booking sheet, zero-upfront fee disclosure. | Phase 2 | Queued |
 | **Phase 4** | **Live Queue Pass, Receptionist Direct Dial & QR Check-In**: Live Queue Pass card, dynamic queue polling (10s/15s/60s), one-tap receptionist phone dialer (`Linking.openURL`), native 60fps camera QR scanner (`expo-camera`), haptic vibration (`expo-haptics`). | Phase 3 | Queued |
 | **Phase 5** | **Doctor Console, Live OPD Queue & Consultation Room**: Doctor live queue screen, sticky cabin presence toggle with return time modal, consultation room with vitals entry (BP, Pulse, Temp, Weight), shift and leave management. | Phase 4 | Queued |
@@ -55,7 +55,7 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 
 - **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
 - **Android Hermes Bytecode Compilation**: 1,710 modules cleanly bundled into production `.hbc` Hermes bytecode via Metro (`npx expo export -p android`).
-- **Test Suite**: 100% pass across design tokens, mutation safety, phone validation, IST date math, and live Supabase queries (`npm run test:verify`).
+- **Test Suite**: 100% pass across design tokens, mutation safety, phone validation, IST date math, and live Supabase queries (`npm run test:verify:phase1`).
 - **Live Backend Telemetry**:
   - `/healthz` → `status: ok`, `database: connected` (Supabase PostgreSQL), `redis: connected`.
   - `/api/health` → `status: ok`.
@@ -64,7 +64,28 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 
 ---
 
-## 5. Complete Documentation Index
+## 5. Phase 2 Verification Record
+
+- **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
+- **Automated Verification Suite (`scripts/verify-phase2.ts`)**: 58/58 passed (100% pass rate).
+- **All Suites (`npm run test:verify:all`)**: 122/122 assertions passed with 0 failures across both Phase 1 and Phase 2.
+- **SecureStore Hardware Encryption**:
+  - Validated hardware token persistence and profile serialization/deserialization.
+  - Tested corrupted JSON recovery with automatic key purging and zero unhandled exceptions.
+  - Verified role persistence (`PATIENT`, `DOCTOR`, `RECEPTIONIST`, `CLINIC`, `ADMIN`) and session wiping.
+- **Apple HIG Auth Interfaces**:
+  - Built `AppCard`, `AppButton` (44pt min height, pill radius 9999), `AppInput`, `AppBadge`, `ScreenWrapper`.
+  - Built `src/app/(auth)/login.tsx` with role switcher tabs, email / +91 mobile toggle, password eye toggle, and Google Sign-In.
+  - Built `src/app/(auth)/signup.tsx` with role-aware fields, credentials, and medical compliance declarations.
+  - Built `src/app/(auth)/verify-otp.tsx` with auto-advancing 6-digit grid and 60-second countdown timer with resend cooldown.
+- **Live Render Production Guard Testing**:
+  - Verified `/auth/login` rejects bad credentials with 401 Unauthorized (guard active).
+  - Verified `/auth/register` rejects malformed bodies with 400 Bad Request (validation active).
+  - Verified `/auth/verify-otp` rejects invalid OTPs.
+
+---
+
+## 6. Complete Documentation Index
 
 - **Product Specification**: [MediArca_Feature_Specification.md](file:///./MediArca_Feature_Specification.md)
 - **Mobile Design System**: [MOBILE_DESIGN.md](file:///./MOBILE_DESIGN.md)
@@ -80,3 +101,4 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
   - [ADR 003: Network Safety & Mutation Idempotency](file:///./docs/decisions/003-safe-fetch-mutation-idempotency.md)
   - [ADR 004: IST (Asia/Kolkata) Healthcare Date Standard](file:///./docs/decisions/004-ist-timezone-standard.md)
   - [ADR 005: Direct Connection to Live Render Backend](file:///./docs/decisions/005-direct-render-production-wiring.md)
+  - [ADR 006: Hardware-Backed SecureStore Session Management](file:///./docs/decisions/006-secure-store-session-management.md)

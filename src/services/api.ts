@@ -694,7 +694,10 @@ export interface User {
   phone?: string;
   role: 'PATIENT' | 'DOCTOR' | 'ADMIN' | 'CLINIC' | 'RECEPTIONIST';
   avatarUrl?: string;
+  isEmailVerified?: boolean;
   mustChangePassword?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   patientProfile?: {
     id: string;
     bloodGroup?: string;

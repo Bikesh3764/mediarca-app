@@ -6,10 +6,13 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  Modal,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Appointment, getFileUrl } from '@/services/api';
 import { getPassDisplayData } from '@/services/queueUtils';
+import { toTelUri } from '@/utils/phoneUtils';
 import { CabinBadge } from '@/components/common/CabinBadge';
 import { QueueTelemetryCard } from '@/components/queue/QueueTelemetryCard';
 import { ReceptionistCallCard } from '@/components/queue/ReceptionistCallCard';
@@ -30,6 +33,7 @@ export const LiveQueueTicket: React.FC<LiveQueueTicketProps> = ({
 }) => {
   const [imgError, setImgError] = useState(false);
   const [togglingPresence, setTogglingPresence] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
 
   const display = getPassDisplayData(appointment);
   const { doctor, status } = appointment;
@@ -70,6 +74,29 @@ export const LiveQueueTicket: React.FC<LiveQueueTicketProps> = ({
 
   return (
     <View style={styles.card}>
+      {/* 0. Active Live Status Pulse Indicator Banner */}
+      {display.isToday && (display.isWaiting || display.isServing || display.isInConsultation) && (
+        <View style={styles.livePulseBanner}>
+          <View style={styles.livePulseIndicatorWrap}>
+            <View
+              style={[
+                styles.livePulseDot,
+                display.isServing
+                  ? styles.livePulseDotServing
+                  : styles.livePulseDotActive,
+              ]}
+            />
+          </View>
+          <Text style={styles.livePulseBannerText}>
+            {display.isServing
+              ? 'LIVE NOW • Token Called in Consultation Room'
+              : display.isInConsultation
+              ? 'LIVE NOW • Consultation In Progress'
+              : 'LIVE QUEUE PASS • Real-Time OPD Sync'}
+          </Text>
+        </View>
+      )}
+
       {/* 1. Header Row: Doctor Info & Token Badge */}
       <View style={styles.headerRow}>
         {/* Doctor Info */}
@@ -101,6 +128,11 @@ export const LiveQueueTicket: React.FC<LiveQueueTicketProps> = ({
               <CabinBadge
                 status={doctor.cabinStatus}
                 expectedReturnTime={doctor.expectedReturnTime}
+                onPress={
+                  doctor.cabinStatus === 'STEPPED_OUT'
+                    ? () => setShowReturnModal(true)
+                    : undefined
+                }
               />
             </View>
 
@@ -114,6 +146,15 @@ export const LiveQueueTicket: React.FC<LiveQueueTicketProps> = ({
                 {display.clinicName}
               </Text>
             </View>
+
+            {display.clinicAddress ? (
+              <View style={styles.addressRow}>
+                <Ionicons name="location-outline" size={12} color={Colors.inkMuted80} />
+                <Text style={styles.clinicAddressText} numberOfLines={1}>
+                  {display.clinicAddress}
+                </Text>
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -122,7 +163,7 @@ export const LiveQueueTicket: React.FC<LiveQueueTicketProps> = ({
           {display.isPendingApproval ? (
             <View style={styles.pendingTokenCapsule}>
               <Text style={styles.capsuleSmallLabel}>Est. Token</Text>
-              <Text style={styles.capsuleLargeNumber}>#{display.estToken}</Text>
+              <Text style={styles.capsuleLargeNumber}>#{display.estToken} (Estimated)</Text>
               <View style={styles.pendingBadgePill}>
                 <Text style={styles.pendingBadgeText}>Pending</Text>
               </View>
@@ -135,12 +176,12 @@ export const LiveQueueTicket: React.FC<LiveQueueTicketProps> = ({
           ) : display.isCompleted ? (
             <View style={styles.completedCapsule}>
               <Ionicons name="checkmark-circle" size={16} color={Colors.success} />
-              <Text style={styles.completedCapsuleText}>#{display.officialToken}</Text>
+              <Text style={styles.completedCapsuleText}>#{display.officialToken || display.estToken}</Text>
             </View>
           ) : display.isServing ? (
             <View style={styles.servingTokenCapsule}>
               <Text style={styles.servingCapsuleLabel}>Serving</Text>
-              <Text style={styles.servingCapsuleNumber}>#{display.officialToken}</Text>
+              <Text style={styles.servingCapsuleNumber}>#{display.officialToken || display.estToken}</Text>
             </View>
           ) : display.isCancelled ? (
             <View style={styles.cancelledCapsule}>
@@ -148,9 +189,13 @@ export const LiveQueueTicket: React.FC<LiveQueueTicketProps> = ({
             </View>
           ) : (
             <View style={styles.confirmedTokenCapsule}>
-              <Text style={styles.capsuleSmallLabel}>Queue</Text>
+              <Text style={styles.capsuleSmallLabel}>
+                {display.officialToken > 0 ? 'Queue' : 'Est. Queue'}
+              </Text>
               <Text style={styles.capsuleLargeNumberPrimary}>
-                #{display.officialToken}
+                {display.officialToken > 0
+                  ? `#${display.officialToken}`
+                  : `#${display.estToken} (Estimated)`}
               </Text>
             </View>
           )}
@@ -254,14 +299,22 @@ export const LiveQueueTicket: React.FC<LiveQueueTicketProps> = ({
               ]}
             />
             <View style={styles.arrivalTextCol}>
-              <Text style={styles.arrivalTitle}>
-                {display.isCheckedIn
-                  ? 'Checked In at Clinic'
-                  : 'Not Checked In (Arrival Pending)'}
-              </Text>
+              <View style={styles.arrivalBadgeTitleRow}>
+                <Text style={styles.arrivalTitle}>
+                  {display.isCheckedIn
+                    ? 'Arrival Confirmed'
+                    : 'Not Checked In (Arrival Pending)'}
+                </Text>
+                {display.isCheckedIn && (
+                  <View style={styles.arrivedVerifiedBadge}>
+                    <Ionicons name="checkmark-circle" size={13} color={Colors.success} />
+                    <Text style={styles.arrivedVerifiedText}>Arrived & Verified</Text>
+                  </View>
+                )}
+              </View>
               <Text style={styles.arrivalSubtitle}>
                 {display.isCheckedIn
-                  ? 'Marked present in waiting area'
+                  ? 'Marked present in clinic waiting area'
                   : 'Scan clinic standee QR upon arrival to confirm presence'}
               </Text>
             </View>
@@ -296,6 +349,11 @@ export const LiveQueueTicket: React.FC<LiveQueueTicketProps> = ({
         appointment={appointment}
         isToday={display.isToday}
         doctorDisplayName={display.doctorDisplayName}
+        onPressSteppedOut={
+          doctor.cabinStatus === 'STEPPED_OUT'
+            ? () => setShowReturnModal(true)
+            : undefined
+        }
       />
 
       {/* 5. Receptionist Coordination & Direct Call Card */}
@@ -322,6 +380,65 @@ export const LiveQueueTicket: React.FC<LiveQueueTicketProps> = ({
           </TouchableOpacity>
         </View>
       )}
+
+      {/* 7. Doctor Stepped Out Return Time Modal */}
+      <Modal
+        visible={showReturnModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowReturnModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.returnModalContent}>
+            <View style={styles.returnModalIconWrap}>
+              <Ionicons name="time" size={32} color={Colors.warningDark} />
+            </View>
+
+            <Text style={styles.returnModalTitle}>Doctor Stepped Out</Text>
+            <Text style={styles.returnModalDoctorName}>
+              {display.doctorDisplayName} • {doctor.specialty}
+            </Text>
+
+            <View style={styles.returnTimeBox}>
+              <Text style={styles.returnTimeLabel}>EXPECTED RETURN</Text>
+              <Text style={styles.returnTimeValue}>
+                {doctor.expectedReturnTime ? `Around ${doctor.expectedReturnTime}` : 'Returning Shortly'}
+              </Text>
+            </View>
+
+            <Text style={styles.returnModalNotice}>
+              The doctor has temporarily stepped out of the consultation cabin. Your token #{display.officialToken || display.estToken} is securely preserved in the OPD queue. Calling will automatically resume upon the doctor's return.
+            </Text>
+
+            {display.receptionistPhone ? (
+              <TouchableOpacity
+                style={styles.callReceptionModalBtn}
+                onPress={() => {
+                  setShowReturnModal(false);
+                  const uri = toTelUri(display.receptionistPhone);
+                  Linking.openURL(uri).catch(() => {
+                    Alert.alert('Unable to Call', `Please dial ${display.receptionistPhone} directly.`);
+                  });
+                }}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="call" size={16} color={Colors.inkWhite} style={{ marginRight: 6 }} />
+                <Text style={styles.callReceptionModalText}>
+                  Call Reception ({display.receptionistName})
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+
+            <TouchableOpacity
+              style={styles.closeModalBtn}
+              onPress={() => setShowReturnModal(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.closeModalBtnText}>Got It</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -672,5 +789,169 @@ const styles = StyleSheet.create({
     ...Typography.captionBold,
     color: Colors.danger,
     fontSize: 12,
+  },
+  livePulseBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: Colors.canvasParchment,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: BorderRadius.pill,
+    marginBottom: Spacing.three,
+    alignSelf: 'flex-start',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.hairline,
+  },
+  livePulseIndicatorWrap: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'rgba(0, 102, 204, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  livePulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  livePulseDotActive: {
+    backgroundColor: Colors.primary,
+  },
+  livePulseDotServing: {
+    backgroundColor: Colors.success,
+  },
+  livePulseBannerText: {
+    ...Typography.captionBold,
+    color: Colors.ink,
+    fontSize: 10,
+    letterSpacing: 0.2,
+  },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  clinicAddressText: {
+    ...Typography.caption,
+    color: Colors.inkMuted80,
+    fontSize: 11,
+    flex: 1,
+  },
+  arrivalBadgeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  arrivedVerifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.successLight,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.pill,
+  },
+  arrivedVerifiedText: {
+    ...Typography.captionBold,
+    color: Colors.successDark,
+    fontSize: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.four,
+  },
+  returnModalContent: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: Colors.surfaceCard,
+    borderRadius: 24,
+    padding: Spacing.five,
+    alignItems: 'center',
+    ...Shadows.card,
+  },
+  returnModalIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.warningLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.three,
+  },
+  returnModalTitle: {
+    ...Typography.title2,
+    color: Colors.ink,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  returnModalDoctorName: {
+    ...Typography.captionBold,
+    color: Colors.primary,
+    textAlign: 'center',
+    marginBottom: Spacing.three,
+  },
+  returnTimeBox: {
+    width: '100%',
+    backgroundColor: Colors.canvasParchment,
+    borderRadius: BorderRadius.md,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.three,
+    alignItems: 'center',
+    marginBottom: Spacing.three,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.hairline,
+  },
+  returnTimeLabel: {
+    ...Typography.captionBold,
+    color: Colors.inkMuted80,
+    fontSize: 10,
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  returnTimeValue: {
+    ...Typography.bodyBold,
+    color: Colors.warningDark,
+    fontSize: 15,
+  },
+  returnModalNotice: {
+    ...Typography.caption,
+    color: Colors.inkMuted80,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: Spacing.four,
+  },
+  callReceptionModalBtn: {
+    width: '100%',
+    height: TouchTarget.minHeight,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.pill,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.two,
+    ...Shadows.card,
+  },
+  callReceptionModalText: {
+    ...Typography.bodyBold,
+    color: Colors.inkWhite,
+    fontSize: 13,
+  },
+  closeModalBtn: {
+    width: '100%',
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: BorderRadius.pill,
+  },
+  closeModalBtnText: {
+    ...Typography.captionBold,
+    color: Colors.inkMuted80,
   },
 });

@@ -92,9 +92,6 @@ export const CameraQrScannerModal: React.FC<CameraQrScannerModalProps> = ({
           return;
         }
 
-        // Tactile Haptic Vibration on valid detection
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-
         if (onScanSuccess) {
           await onScanSuccess(parsed);
         } else {
@@ -104,6 +101,9 @@ export const CameraQrScannerModal: React.FC<CameraQrScannerModalProps> = ({
             appointmentId,
           });
         }
+
+        // Tactile Haptic Vibration on confirmed verification
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 
         // Brief delay for tactile feedback before closing
         setTimeout(() => {
@@ -128,21 +128,27 @@ export const CameraQrScannerModal: React.FC<CameraQrScannerModalProps> = ({
       return;
     }
 
+    const clinicId = defaultClinicId || '';
+    if (!clinicId) {
+      setErrorMessage('Missing clinic facility ID. Please scan the clinic desk QR standee using your camera.');
+      return;
+    }
+
     setIsVerifying(true);
     setErrorMessage(null);
 
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-
       if (onScanSuccess) {
-        await onScanSuccess({ clinicId: defaultClinicId || '', code });
+        await onScanSuccess({ clinicId, code });
       } else {
         await api.checkInWithQR({
-          clinicId: defaultClinicId || '',
+          clinicId,
           code,
           appointmentId,
         });
       }
+
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 
       setTimeout(() => {
         onClose();

@@ -51,8 +51,8 @@ Execute Phase 4 of the MediArca native mobile application for the Google Play St
    - Updated `PROJECT.md` and `docs/tasks/current-task.md`.
 
 8. **Automated Verification Suite**:
-   - Built `scripts/verify-phase4.ts` testing 74 assertions across adaptive polling calculations (10s/15s/60s/0s), wait time formatting, QR payload decoding, ticket state lifecycle, telephone URI formatting, manual check-in code validation, Apple HIG design tokens, and live backend queue queries.
-   - Total test assertions across all suites: 286/286 tests passing (100%).
+   - Built `scripts/verify-phase4.ts` testing 87 assertions across adaptive polling calculations (10s/15s/60s/0s), boundary wait time formatting (preventing ~0 mins, ~60 mins, and ~1h 60m), QR payload decoding (JSON, URL paths, query parameters, URL-encoded strings, raw IDs), ticket state lifecycle, tokenDisplay normalization, clinic address presentation, doctor return time modal sync, telephone URI formatting, manual check-in code validation, Apple HIG design tokens, and live backend queue queries.
+   - Total test assertions across all suites: 299/299 tests passing (100%).
 
 ---
 
@@ -62,12 +62,15 @@ Execute Phase 4 of the MediArca native mobile application for the Google Play St
 - [x] Phase 1 Automated Suite: `npm run test:verify:phase1` passes 64/64 tests (100%).
 - [x] Phase 2 Automated Suite: `npm run test:verify:phase2` passes 61/61 tests (100%).
 - [x] Phase 3 Automated Suite: `npm run test:verify:phase3` passes 87/87 tests (100%).
-- [x] Phase 4 Automated Suite: `npm run test:verify:phase4` passes 74/74 tests (100%).
-- [x] All Tests Suite: `npm run test:verify:all` passes 286/286 assertions (100%).
-- [x] Adaptive polling intervals verified: 10s (front of queue <= 2), 15s (active shift), 60s (idle/future), 0s (backgrounded).
-- [x] QR payload parser verified: JSON, URLs, query parameters, URL-encoded strings, raw IDs.
-- [x] One-tap receptionist phone dialer (`Linking.openURL(toTelUri)`) and formatting verified.
+- [x] Phase 4 Automated Suite: `npm run test:verify:phase4` passes 87/87 tests (100%).
+- [x] All Tests Suite: `npm run test:verify:all` passes 299/299 assertions (100%).
+- [x] Adaptive polling intervals verified: 10s (front of queue <= 2 or in consultation), 15s (active shift), 60s (idle/future), 0s (backgrounded).
+- [x] QR payload parser verified: JSON (with id/clinicId), URLs (with query parameters and path segments), query parameters, URL-encoded strings, raw IDs.
+- [x] One-tap receptionist phone dialer (`Linking.openURL(toTelUri)`) and Alert fallback verified.
 - [x] Native hardware camera QR viewfinder (`expo-camera`), torch toggle, and tactile haptic vibration (`expo-haptics`) configured.
-- [x] Manual check-in code fallback input implemented for zero-friction arrival verification.
+- [x] Manual check-in code fallback input with clinic ID prevalidation implemented for zero-friction arrival verification.
+- [x] Doctor Cabin Presence sync with interactive Stepped Out Return Time modal verified.
+- [x] Arrival Check-in Card with explicit "Arrived & Verified" badge verified.
+- [x] Big bold ticket card with active status pulse indicator, clinic address, and `#X (Estimated)` formatting verified.
 - [x] Apple HIG 44pt touch targets and full pill buttons verified.
 - [x] Live Render backend `/appointments/queue-preview` queries operational.

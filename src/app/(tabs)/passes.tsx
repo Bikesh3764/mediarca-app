@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -37,6 +37,8 @@ export default function PassesScreen() {
   // AppState tracking for adaptive background pause
   const [isAppActive, setIsAppActive] = useState(AppState.currentState === 'active');
   const pollingTimerRef = useRef<any>(null);
+  const appointmentsRef = useRef(appointments);
+  appointmentsRef.current = appointments;
 
   // Fetch appointments from live backend
   const fetchAppointments = useCallback(async (isBackground = false) => {
@@ -49,7 +51,7 @@ export default function PassesScreen() {
     if (!isBackground) {
       // Don't show full loading spinner on periodic background refresh
       // Only show spinner on initial load if appointments are empty
-      if (appointments.length === 0) setLoading(true);
+      if (appointmentsRef.current.length === 0) setLoading(true);
     }
 
     try {
@@ -63,7 +65,7 @@ export default function PassesScreen() {
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [isAuthenticated, appointments.length]);
+  }, [isAuthenticated]);
 
   // Handle pull-to-refresh
   const handleRefresh = useCallback(() => {
@@ -95,22 +97,26 @@ export default function PassesScreen() {
   // Segregate Active vs Past passes
   const todayStr = getLocalDateString();
 
-  const activePasses = appointments.filter((a) => {
-    return (
-      a.status === 'WAITING' ||
-      a.status === 'PENDING_APPROVAL' ||
-      a.status === 'IN_CONSULTATION'
-    );
-  });
+  const activePasses = useMemo(() => {
+    return appointments.filter((a) => {
+      return (
+        a.status === 'WAITING' ||
+        a.status === 'PENDING_APPROVAL' ||
+        a.status === 'IN_CONSULTATION'
+      );
+    });
+  }, [appointments]);
 
-  const pastPasses = appointments.filter((a) => {
-    return (
-      a.status === 'COMPLETED' ||
-      a.status === 'CANCELLED' ||
-      a.status === 'REJECTED' ||
-      a.status === 'EXPIRED'
-    );
-  });
+  const pastPasses = useMemo(() => {
+    return appointments.filter((a) => {
+      return (
+        a.status === 'COMPLETED' ||
+        a.status === 'CANCELLED' ||
+        a.status === 'REJECTED' ||
+        a.status === 'EXPIRED'
+      );
+    });
+  }, [appointments]);
 
   // Adaptive Polling Engine
   useEffect(() => {
@@ -146,7 +152,9 @@ export default function PassesScreen() {
       hasActivePasses: activePasses.length > 0,
       patientsAhead: minPatientsAhead,
       isShiftActive: anyShiftActive,
-      isConfirmed: activePasses.some((p) => p.status === 'WAITING'),
+      isConfirmed: activePasses.some(
+        (p) => p.status === 'WAITING' || p.status === 'IN_CONSULTATION'
+      ),
     });
 
     if (intervalMs > 0) {
@@ -160,7 +168,7 @@ export default function PassesScreen() {
         clearTimeout(pollingTimerRef.current);
       }
     };
-  }, [appointments, isAppActive, isAuthenticated, activePasses, todayStr, fetchAppointments]);
+  }, [appointments, isAppActive, isAuthenticated, todayStr, fetchAppointments]);
 
   // Handlers for pass actions
   const handleCancelPass = async (id: string) => {
@@ -183,16 +191,12 @@ export default function PassesScreen() {
   };
 
   const handleScanSuccess = async (payload: { clinicId: string; code: string }) => {
-    try {
-      await api.checkInWithQR({
-        clinicId: payload.clinicId,
-        code: payload.code,
-        appointmentId: selectedAppointment?.id,
-      });
-      await fetchAppointments(true);
-    } catch (err: any) {
-      console.warn('QR check-in error:', err?.message);
-    }
+    await api.checkInWithQR({
+      clinicId: payload.clinicId,
+      code: payload.code,
+      appointmentId: selectedAppointment?.id,
+    });
+    await fetchAppointments(true);
   };
 
   return (

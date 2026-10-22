@@ -11,30 +11,33 @@ import { Appointment, getLocalDateString, cleanSlotName } from './api';
 
 /**
  * Formats wait time in minutes to user-friendly human string.
+ * Accurately handles fractional boundary minutes without producing ~0 mins, ~60 mins, or ~1h 60m.
  * Examples:
  * - null / undefined / NaN -> 'Per Queue Flow'
- * - <= 0 -> 'Now'
- * - 1 -> '~1 min'
+ * - <= 0 / 0.4 -> 'Now'
+ * - 0.8 / 1 -> '~1 min'
  * - 12 -> '~12 mins'
- * - 60 -> '~1 hr'
+ * - 59.8 / 60 -> '~1 hr'
  * - 75 -> '~1h 15m'
- * - 120 -> '~2 hrs'
+ * - 119.8 / 120 -> '~2 hrs'
+ * - 130 -> '~2h 10m'
  */
 export const formatWaitTime = (minutes?: number | null): string => {
   if (minutes === undefined || minutes === null || isNaN(minutes)) {
     return 'Per Queue Flow';
   }
-  if (minutes <= 0) {
+  const totalMins = Math.round(minutes);
+  if (totalMins <= 0) {
     return 'Now';
   }
-  if (minutes === 1) {
+  if (totalMins === 1) {
     return '~1 min';
   }
-  if (minutes < 60) {
-    return `~${Math.round(minutes)} mins`;
+  if (totalMins < 60) {
+    return `~${totalMins} mins`;
   }
-  const hrs = Math.floor(minutes / 60);
-  const remainingMins = Math.round(minutes % 60);
+  const hrs = Math.floor(totalMins / 60);
+  const remainingMins = totalMins % 60;
   if (remainingMins === 0) {
     return `~${hrs} hr${hrs > 1 ? 's' : ''}`;
   }
@@ -115,7 +118,12 @@ export const parseQrPayload = (
     try {
       const decoded = text.startsWith('%7B') ? decodeURIComponent(text) : text;
       const parsed = JSON.parse(decoded);
-      const clinicId = String(parsed.clinicId || parsed.clinic_id || '').trim();
+      const clinicId = String(
+        parsed.clinicId ||
+        parsed.clinic_id ||
+        (typeof parsed.id === 'string' && parsed.id.startsWith('cl_') ? parsed.id : '') ||
+        ''
+      ).trim();
       const code = String(
         parsed.code || parsed.checkinCode || parsed.check_in_code || ''
       ).trim();
@@ -159,12 +167,18 @@ export const parseQrPayload = (
     // Fall through
   }
 
-  // 3. Raw clinic ID format: "cl_..." or UUID without query param
+  // 3. Raw clinic ID format or clinic ID embedded in URL path: "cl_..." or UUID
   if (
     /^cl_[a-zA-Z0-9_-]+$/.test(text) ||
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(text)
   ) {
     return { clinicId: text, code: '' };
+  }
+
+  // 4. URL path segment with clinic identifier (e.g. https://domain.com/clinics/cl_xxx)
+  const pathClinicMatch = text.match(/\b(cl_[a-zA-Z0-9_-]+)\b/);
+  if (pathClinicMatch) {
+    return { clinicId: pathClinicMatch[1], code: '' };
   }
 
   return null;
@@ -177,6 +191,7 @@ export interface PassDisplayData {
   isToday: boolean;
   estToken: number;
   officialToken: number;
+  tokenDisplay: string;
   isPendingApproval: boolean;
   isWaiting: boolean;
   isInConsultation: boolean;
@@ -274,10 +289,16 @@ export const getPassDisplayData = (
     doctor?.clinicAddress ||
     'Healthcare Facility';
 
+  const tokenDisplay =
+    isPendingApproval || queueNumber <= 0
+      ? `#${estToken} (Estimated)`
+      : `#${queueNumber}`;
+
   return {
     isToday,
     estToken,
     officialToken: queueNumber,
+    tokenDisplay,
     isPendingApproval,
     isWaiting,
     isInConsultation,

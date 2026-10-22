@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet, View, Text, ViewStyle, TextStyle, TouchableOpacity } from 'react-native';
 import { Colors, BorderRadius } from '@/constants/theme';
 
 export type CabinStatus = 'IN_CABIN' | 'STEPPED_OUT' | 'NOT_IN_CABIN';
@@ -10,6 +10,7 @@ export interface CabinBadgeProps {
   size?: 'sm' | 'md';
   style?: ViewStyle;
   textStyle?: TextStyle;
+  onPress?: () => void;
 }
 
 /**
@@ -22,6 +23,7 @@ export const CabinBadge: React.FC<CabinBadgeProps> = ({
   size = 'md',
   style,
   textStyle,
+  onPress,
 }) => {
   const normalized = ((status || 'IN_CABIN').toUpperCase() as CabinStatus);
   const cleanReturn = expectedReturnTime ? expectedReturnTime.replace(/^~\s*/, '').trim() : '';
@@ -55,7 +57,7 @@ export const CabinBadge: React.FC<CabinBadgeProps> = ({
 
   const isSmall = size === 'sm';
 
-  return (
+  const badgeContent = (
     <View
       style={[
         styles.badge,
@@ -84,6 +86,16 @@ export const CabinBadge: React.FC<CabinBadgeProps> = ({
       </Text>
     </View>
   );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.75}>
+        {badgeContent}
+      </TouchableOpacity>
+    );
+  }
+
+  return badgeContent;
 };
 
 const styles = StyleSheet.create({

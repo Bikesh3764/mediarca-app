@@ -147,6 +147,18 @@ async function runPhase4Verification() {
     'Pending approval without active shift returns 60,000ms (60s)'
   );
 
+  // Near front of queue in consultation: returns 10,000ms (10s)
+  assert(
+    calculatePollingInterval({
+      isAppActive: true,
+      hasActivePasses: true,
+      patientsAhead: 0,
+      isShiftActive: true,
+      isConfirmed: true,
+    }) === 10000,
+    'Patients ahead = 0 (or in consultation) during active shift returns 10,000ms (10s)'
+  );
+
   // --- 2. Dynamic Wait Time Formatting ---
   console.log('\n--- 2. Dynamic Wait Time Formatting (formatWaitTime) ---');
   assert(formatWaitTime(null) === 'Per Queue Flow', 'null minutes formats as "Per Queue Flow"');
@@ -154,11 +166,15 @@ async function runPhase4Verification() {
   assert(formatWaitTime(NaN) === 'Per Queue Flow', 'NaN minutes formats as "Per Queue Flow"');
   assert(formatWaitTime(0) === 'Now', '0 minutes formats as "Now"');
   assert(formatWaitTime(-5) === 'Now', 'Negative minutes formats as "Now"');
+  assert(formatWaitTime(0.4) === 'Now', 'Fractional 0.4 minutes formats as "Now" (never ~0 mins)');
+  assert(formatWaitTime(0.8) === '~1 min', 'Fractional 0.8 minutes formats as "~1 min"');
   assert(formatWaitTime(1) === '~1 min', '1 minute formats as "~1 min"');
   assert(formatWaitTime(15) === '~15 mins', '15 minutes formats as "~15 mins"');
   assert(formatWaitTime(45) === '~45 mins', '45 minutes formats as "~45 mins"');
+  assert(formatWaitTime(59.8) === '~1 hr', '59.8 minutes formats as "~1 hr" (never ~60 mins)');
   assert(formatWaitTime(60) === '~1 hr', '60 minutes formats as "~1 hr"');
   assert(formatWaitTime(75) === '~1h 15m', '75 minutes formats as "~1h 15m"');
+  assert(formatWaitTime(119.8) === '~2 hrs', '119.8 minutes formats as "~2 hrs" (never ~1h 60m)');
   assert(formatWaitTime(120) === '~2 hrs', '120 minutes formats as "~2 hrs"');
   assert(formatWaitTime(130) === '~2h 10m', '130 minutes formats as "~2h 10m"');
 
@@ -228,6 +244,24 @@ async function runPhase4Verification() {
     JSON.stringify(parsedRawId)
   );
 
+  // URL path format containing clinic ID (e.g. /api/clinics/cl_path_test_01)
+  const urlPathPayload = 'https://mediarca-mdwk.onrender.com/api/clinics/cl_path_test_01';
+  const parsedPath = parseQrPayload(urlPathPayload);
+  assert(
+    parsedPath?.clinicId === 'cl_path_test_01',
+    'Parses clinic ID embedded in URL path segment (/clinics/cl_...)',
+    JSON.stringify(parsedPath)
+  );
+
+  // JSON payload using "id" field fallback
+  const jsonIdPayload = JSON.stringify({ id: 'cl_json_id_99', code: 'XY-1234' });
+  const parsedJsonId = parseQrPayload(jsonIdPayload);
+  assert(
+    parsedJsonId?.clinicId === 'cl_json_id_99' && parsedJsonId?.code === 'XY-1234',
+    'Parses JSON format using {"id": "cl_..."} fallback',
+    JSON.stringify(parsedJsonId)
+  );
+
   // UUID format
   const uuidPayload = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
   const parsedUuid = parseQrPayload(uuidPayload);
@@ -291,6 +325,8 @@ async function runPhase4Verification() {
   const pendingDisplay = getPassDisplayData(pendingAppt, todayStr);
   assert(pendingDisplay.isPendingApproval === true, 'Identifies PENDING_APPROVAL status');
   assert(pendingDisplay.estToken === 4, 'Resolves estimated token #4', `#${pendingDisplay.estToken}`);
+  assert(pendingDisplay.tokenDisplay === '#4 (Estimated)', 'tokenDisplay formats as "#4 (Estimated)" for pending ticket');
+  assert(pendingDisplay.clinicAddress === 'Linking Road, Bandra West', 'Resolves clinic address on ticket');
   assert(pendingDisplay.doctorDisplayName === 'Dr. Vikram Sharma', 'Prepends Dr. to doctor name without duplicate Dr.');
   assert(pendingDisplay.receptionistName === 'Pooja Nair', 'Resolves assigned receptionist name');
   assert(pendingDisplay.receptionistPhone === '+91 98200 99999', 'Resolves receptionist direct phone');
@@ -320,10 +356,21 @@ async function runPhase4Verification() {
   const waitingDisplay = getPassDisplayData(waitingAppt, todayStr);
   assert(waitingDisplay.isWaiting === true, 'Identifies WAITING status');
   assert(waitingDisplay.officialToken === 7, 'Resolves official confirmed token #7');
+  assert(waitingDisplay.tokenDisplay === '#7', 'tokenDisplay formats as "#7" for confirmed official token');
   assert(waitingDisplay.patientsAhead === 3, 'Resolves patients ahead = 3');
   assert(waitingDisplay.waitTimeDisplay === '~18 mins', 'Resolves wait time display as ~18 mins', waitingDisplay.waitTimeDisplay);
-  assert(waitingDisplay.isCheckedIn === true, 'Resolves isCheckedIn as true');
+  assert(waitingDisplay.isCheckedIn === true, 'Resolves isCheckedIn as true (Arrived & Verified)');
   assert(waitingDisplay.isServing === false, 'User is not yet being served (current serving #4, token #7)');
+
+  // Case 4.2b: Waiting Ticket with zero queueNumber falls back to estimated token format (never #0)
+  const unconfirmedWaiting: Appointment = {
+    ...waitingAppt,
+    id: 'appt_waiting_zero',
+    queueNumber: 0,
+    estimatedQueueNumber: 3,
+  };
+  const unconfirmedDisplay = getPassDisplayData(unconfirmedWaiting, todayStr);
+  assert(unconfirmedDisplay.tokenDisplay === '#3 (Estimated)', 'Waiting ticket without official number gets "#3 (Estimated)" (never #0)');
 
   // Case 4.3: User Token is Currently Being Served (Token Called)
   const servingAppt: Appointment = {
@@ -381,6 +428,27 @@ async function runPhase4Verification() {
 
   const expiredDisplay = getPassDisplayData(expiredAppt, todayStr);
   assert(expiredDisplay.isExpired === true, 'Identifies EXPIRED status');
+
+  // Case 4.7: Doctor Stepped Out Presence Sync & Return Time
+  const steppedOutAppt: Appointment = {
+    ...waitingAppt,
+    id: 'appt_stepped_out_1',
+    doctor: {
+      ...mockDoctor,
+      cabinStatus: 'STEPPED_OUT',
+      expectedReturnTime: '11:45 AM',
+    },
+  };
+  const steppedOutDisplay = getPassDisplayData(steppedOutAppt, todayStr);
+  assert(
+    steppedOutAppt.doctor.cabinStatus === 'STEPPED_OUT',
+    'Doctor cabin presence synchronizes as STEPPED_OUT'
+  );
+  assert(
+    steppedOutAppt.doctor.expectedReturnTime === '11:45 AM',
+    'Doctor expected return time resolves for return time modal',
+    steppedOutAppt.doctor.expectedReturnTime ?? undefined
+  );
 
   // --- 5. Telephone URI & Native Dialing Formatting ---
   console.log('\n--- 5. Telephone URI & Native Phone Dialing Formatting ---');

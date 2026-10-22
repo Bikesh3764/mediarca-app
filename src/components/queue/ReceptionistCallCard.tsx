@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Linking, Platform } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { formatDisplayPhone, toTelUri } from '@/utils/phoneUtils';
 import { Colors, Spacing, BorderRadius, Typography, TouchTarget, Shadows } from '@/constants/theme';
@@ -24,8 +24,13 @@ export const ReceptionistCallCard: React.FC<ReceptionistCallCardProps> = ({
   const handleDial = () => {
     if (!receptionistPhone) return;
     const uri = toTelUri(receptionistPhone);
+    if (uri === 'tel:') return;
     Linking.openURL(uri).catch((err) => {
       console.warn('Could not launch phone dialer:', err);
+      Alert.alert(
+        'Unable to Place Call',
+        `Please dial ${formatDisplayPhone(receptionistPhone)} directly from your device dialer.`
+      );
     });
   };
 

@@ -112,21 +112,23 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 ## 7. Phase 4 Verification Record
 
 - **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
-- **Automated Verification Suite (`scripts/verify-phase4.ts`)**: 74/74 passed (100% pass rate).
-- **All Suites (`npm run test:verify:all`)**: 286/286 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), Phase 3 (87), and Phase 4 (74).
+- **Automated Verification Suite (`scripts/verify-phase4.ts`)**: 87/87 passed (100% pass rate).
+- **All Suites (`npm run test:verify:all`)**: 299/299 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), Phase 3 (87), and Phase 4 (87).
 - **Live Queue Pass & Ticket Architecture**:
   - Built `src/app/(tabs)/passes.tsx` and `src/app/passes.tsx` with segmented tabs (`Active Passes` vs `Past Visits`), pull-to-refresh (`RefreshControl`), and authentication gating.
-  - Built `LiveQueueTicket.tsx` featuring big bold tokens (`#X` vs `#X (Estimated)`), real-time cabin presence sync (`CabinBadge`), 3-tile metadata grid (Date, Shift, Est. Time / Status), and arrival check-in action.
-  - Built `QueueTelemetryCard.tsx` displaying live queue serving token, patients ahead (`patientsAway`), and dynamic wait time via `formatWaitTime`.
-  - Built `ReceptionistCallCard.tsx` with one-tap native telephone button (`Linking.openURL(toTelUri(receptionistPhone))`) enabling patients to pay via UPI or coordinate arrival.
+  - Built `LiveQueueTicket.tsx` featuring active status pulse indicator banner, big bold tokens (`#X` vs `#X (Estimated)`), clinic address presentation, real-time cabin presence sync (`CabinBadge`), 3-tile metadata grid (Date, Shift, Est. Time / Status), and arrival check-in action.
+  - Built `DoctorReturnTimeModal` in `LiveQueueTicket.tsx` seamlessly synchronizing when a doctor is `STEPPED_OUT`, presenting expected return time, queue token preservation assurance, and direct button to call the reception desk.
+  - Arrival Check-In Card featuring explicit "Arrived & Verified" badge with checkmark indicator and step-out toggle, or "Scan Clinic QR" camera button.
+  - Built `QueueTelemetryCard.tsx` displaying live queue serving token, patients ahead (`patientsAway`), dynamic wait time via `formatWaitTime`, and touchable stepped-out alert linking directly to return time modal.
+  - Built `ReceptionistCallCard.tsx` with one-tap native telephone button (`Linking.openURL(toTelUri(receptionistPhone))`) with native alert fallback enabling patients to coordinate desk fee payment via UPI or coordinate arrival.
 - **Adaptive Polling Engine**:
-  - Implemented `calculatePollingInterval`: 0ms (paused) when app is backgrounded (`AppState !== 'active'`) or 0 active passes; 10s (10,000ms) when near front of queue (`patientsAway <= 2`) during an active clinic shift; 15s (15,000ms) during an active clinic shift; 60s (60,000ms) when shift is inactive or for future-dated tickets.
+  - Implemented `calculatePollingInterval`: 0ms (paused) when app is backgrounded (`AppState !== 'active'`) or 0 active passes; 10s (10,000ms) when near front of queue (`patientsAway <= 2` or in consultation) during an active clinic shift; 15s (15,000ms) during an active clinic shift; 60s (60,000ms) when shift is inactive or for future-dated tickets.
 - **Hardware Camera QR Check-In (`CameraQrScannerModal`)**:
   - Viewfinder with `expo-camera` (`CameraView` with `barcodeScannerSettings={{ barcodeTypes: ['qr'] }}`).
   - Animated laser scan line (`Animated.loop`), flashlight/torch toggle, and close button.
-  - Multi-format payload decoding: JSON (`{"clinicId": "...", "checkinCode": "..."}`), URL parameters (`/clinic-checkin?clinicId=...&code=...`), and raw IDs via `parseQrPayload`.
-  - Tactile haptic feedback via `expo-haptics` (`Haptics.notificationAsync`).
-  - Clear permission handling with settings redirect (`Linking.openSettings()`) and manual 6-character check-in code input fallback.
+  - Multi-format payload decoding: JSON (`{"clinicId": "...", "checkinCode": "..."}` or `{"id": "cl_..."}`), URL parameters (`/clinic-checkin?clinicId=...&code=...`), URL path segments (`/clinics/cl_...`), and raw IDs via `parseQrPayload`.
+  - Tactile haptic feedback via `expo-haptics` (`Haptics.notificationAsync`) triggering on confirmed arrival verification.
+  - Clear permission handling with settings redirect (`Linking.openSettings()`) and manual 6-character check-in code input fallback with clinic ID prevalidation.
 
 ---
 

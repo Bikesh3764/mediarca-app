@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Appointment } from '@/services/api';
 import { formatWaitTime } from '@/services/queueUtils';
@@ -9,24 +9,26 @@ interface QueueTelemetryCardProps {
   appointment: Appointment;
   isToday: boolean;
   doctorDisplayName: string;
+  onPressSteppedOut?: () => void;
 }
 
 export const QueueTelemetryCard: React.FC<QueueTelemetryCardProps> = ({
   appointment,
   isToday,
   doctorDisplayName,
+  onPressSteppedOut,
 }) => {
   const { doctor, queueNumber, status, liveQueue } = appointment;
 
-  if (!isToday || (status !== 'WAITING' && status !== 'IN_CONSULTATION') || !liveQueue) {
+  if (!isToday || (status !== 'WAITING' && status !== 'IN_CONSULTATION')) {
     return null;
   }
 
-  const currentServing = liveQueue.currentServingQueueNumber || 0;
+  const currentServing = liveQueue?.currentServingQueueNumber || 0;
   const isCalled = currentServing === queueNumber && queueNumber > 0;
   const isInConsultation = status === 'IN_CONSULTATION';
-  const patientsAway = liveQueue.patientsAway ?? 0;
-  const waitMinutes = liveQueue.estimatedWaitMinutes;
+  const patientsAway = liveQueue?.patientsAway ?? (queueNumber > 1 ? queueNumber - 1 : 0);
+  const waitMinutes = liveQueue?.estimatedWaitMinutes;
 
   return (
     <View style={styles.container}>
@@ -49,13 +51,26 @@ export const QueueTelemetryCard: React.FC<QueueTelemetryCardProps> = ({
 
       {/* Cabin Status Alert (if doctor stepped out or not in cabin) */}
       {doctor.cabinStatus === 'STEPPED_OUT' && (
-        <View style={[styles.cabinAlertBanner, styles.steppedOutBanner]}>
+        <TouchableOpacity
+          style={[styles.cabinAlertBanner, styles.steppedOutBanner]}
+          onPress={onPressSteppedOut}
+          activeOpacity={onPressSteppedOut ? 0.75 : 1}
+          disabled={!onPressSteppedOut}
+        >
           <Ionicons name="time" size={16} color={Colors.warningDark} style={styles.alertIcon} />
-          <Text style={styles.cabinAlertText}>
-            <Text style={styles.boldText}>Doctor stepped out:</Text> Expected back{' '}
-            {doctor.expectedReturnTime ? `around ${doctor.expectedReturnTime}` : 'soon'}.
-          </Text>
-        </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cabinAlertText}>
+              <Text style={styles.boldText}>Doctor stepped out:</Text> Expected back{' '}
+              {doctor.expectedReturnTime ? `around ${doctor.expectedReturnTime}` : 'soon'}.
+            </Text>
+            {onPressSteppedOut && (
+              <Text style={styles.tapDetailsHint}>Tap for return details & queue reassurance →</Text>
+            )}
+          </View>
+          {onPressSteppedOut && (
+            <Ionicons name="chevron-forward" size={16} color={Colors.warningDark} />
+          )}
+        </TouchableOpacity>
       )}
 
       {doctor.cabinStatus === 'NOT_IN_CABIN' && (
@@ -186,6 +201,12 @@ const styles = StyleSheet.create({
     color: Colors.ink,
     flex: 1,
     lineHeight: 18,
+  },
+  tapDetailsHint: {
+    ...Typography.captionBold,
+    color: Colors.warningDark,
+    fontSize: 10,
+    marginTop: 2,
   },
   boldText: {
     fontWeight: '700',

@@ -107,6 +107,7 @@ export const BorderRadius = {
   md: 12,
   card: 16,
   lg: 20,
+  xl: 24,
   pill: 9999,
 } as const;
 
@@ -129,6 +130,12 @@ export const Typography = {
     letterSpacing: -0.2,
     lineHeight: 26,
   },
+  headline: {
+    fontSize: 17,
+    fontWeight: '600' as const,
+    letterSpacing: -0.4,
+    lineHeight: 22,
+  },
   body: {
     fontSize: 16,
     fontWeight: '400' as const,
@@ -146,6 +153,12 @@ export const Typography = {
     fontWeight: '500' as const,
     letterSpacing: 0,
     lineHeight: 20,
+  },
+  footnote: {
+    fontSize: 13,
+    fontWeight: '400' as const,
+    letterSpacing: -0.1,
+    lineHeight: 18,
   },
   caption: {
     fontSize: 12,
@@ -216,6 +229,18 @@ export const Shadows = {
     },
     android: {
       elevation: 2,
+    },
+    default: {},
+  }),
+  modal: Platform.select({
+    ios: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.15,
+      shadowRadius: 24,
+    },
+    android: {
+      elevation: 8,
     },
     default: {},
   }),

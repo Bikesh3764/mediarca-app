@@ -1403,7 +1403,7 @@ export const api = {
     return handleResponse(res);
   },
 
-  async uploadAvatar(file: File): Promise<{ avatarUrl: string; user: User }> {
+  async uploadAvatar(file: any): Promise<{ avatarUrl: string; user: User }> {
     const formData = new FormData();
     formData.append('avatar', file);
     const res = await safeFetch(`${API_BASE_URL}/auth/avatar`, {
@@ -1634,6 +1634,20 @@ export const api = {
       body: JSON.stringify(data),
     });
     return handleResponse(res);
+  },
+
+  async updateCabinPresence(data: {
+    status: 'IN_CABIN' | 'STEPPED_OUT' | 'NOT_IN_CABIN';
+    expectedReturnTime?: string | null;
+    returnEstimateMinutes?: number | null;
+    doctorId?: string;
+  }): Promise<{
+    id: string;
+    cabinStatus: string;
+    expectedReturnTime: string | null;
+    cabinStatusUpdatedAt: string | null;
+  }> {
+    return this.updateDoctorCabinStatus(data);
   },
 
   // Appointments & Queue Preview
@@ -1895,6 +1909,18 @@ export const api = {
       body: JSON.stringify(body),
     });
     return handleResponse(res);
+  },
+
+  async completeAppointment(body: {
+    appointmentId: string;
+    diagnosis?: string;
+    advice?: string;
+    followUpDate?: string;
+    clinicalNotes?: string;
+    vitals?: any;
+    medicines?: any[];
+  }): Promise<{ appointment: Appointment }> {
+    return this.completeConsultation(body);
   },
 
   async holdConsultation(appointmentId: string): Promise<Appointment> {

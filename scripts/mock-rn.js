@@ -58,6 +58,19 @@ Module.prototype.require = function (id) {
     };
   }
 
+  if (id === 'expo-image-picker') {
+    return {
+      requestMediaLibraryPermissionsAsync: async () => ({ granted: true, status: 'granted' }),
+      launchImageLibraryAsync: async () => ({
+        canceled: false,
+        assets: [{ uri: 'file:///mock/image.jpg', width: 400, height: 400, mimeType: 'image/jpeg', fileSize: 50000 }],
+      }),
+      MediaTypeOptions: {
+        Images: 'Images',
+      },
+    };
+  }
+
   if (id === 'expo-haptics') {
     return {
       notificationAsync: async () => {},

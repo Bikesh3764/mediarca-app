@@ -266,7 +266,104 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* Phase 3: Patient Discovery & Booking Action Card */}
+      {/* Phase 5: Doctor OPD Console & Consultation Room Action Card */}
+      <View style={styles.card}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.sectionTitle}>Doctor OPD Console & Queue</Text>
+          <AppBadge variant="primary" label="Phase 5 Live" size="sm" />
+        </View>
+        <Text style={styles.sectionSubtitle}>
+          Real-time cabin presence switcher, shift selector, segmented queue, clinical vitals validation, and consultation room.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.signInPrimaryButton}
+          onPress={() => router.push('/(doctor)/queue')}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="medical-outline" size={18} color={Colors.inkWhite} />
+          <Text style={styles.signInPrimaryText}>Launch Doctor Live Queue</Text>
+        </TouchableOpacity>
+
+        <View style={styles.doctorSubNavRow}>
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/(doctor)/schedule')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="calendar-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>Shifts & Leaves</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/(doctor)/profile')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="person-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>Doctor Profile</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Phase 5 Deliverables Checklist Card */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Phase 5 Deliverables</Text>
+        <Text style={styles.sectionSubtitle}>
+          Doctor OPD Live Queue, sticky cabin presence switcher, consultation room, vitals validation, and schedule manager.
+        </Text>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Sticky Header with Cabin Presence Switcher (In Cabin, Stepped Out, Not in Cabin)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Return Time Selector Sheet (10m, 15m, 30m, 45m, Custom) with Optimistic UI</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Multi-Shift Switcher & Active Clinic Venue Selector</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Queue Segmented View (Waiting by Token, In Cabin, Completed)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Patient Queue Actions: Call to Cabin, Hold, Open Consultation</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>OPD Consultation Room with Patient Summary & Clinical Notes</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Vitals Card with Clinical Bounds Validation (BP, Pulse, Temp, Weight)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Doctor Schedule Manager with Apple HIG 7-Day Discs (M T W T F S S)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Emergency 'Take Leave Today' Toggle & Scheduled Absence Date Range Picker</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Doctor Profile with Cloudflare R2 Avatar Upload & Clinic Affiliation Accept/Reject</Text>
+        </View>
+      </View>
+
       {/* Phase 4: Live Queue Ticket & QR Check-In Action Card */}
       <View style={styles.card}>
         <View style={styles.cardHeaderRow}>
@@ -659,5 +756,28 @@ const styles = StyleSheet.create({
   signInPrimaryText: {
     ...Typography.bodyBold,
     color: Colors.inkWhite,
+  },
+  doctorSubNavRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    marginTop: Spacing.two,
+  },
+  doctorSubNavBtn: {
+    flex: 1,
+    minHeight: TouchTarget.minHeight,
+    backgroundColor: Colors.canvasParchment,
+    borderRadius: BorderRadius.pill,
+    borderWidth: 1,
+    borderColor: Colors.hairline,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: Spacing.three,
+  },
+  doctorSubNavText: {
+    ...Typography.footnote,
+    fontWeight: '600',
+    color: Colors.primary,
   },
 });

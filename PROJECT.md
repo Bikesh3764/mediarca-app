@@ -132,7 +132,34 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 
 ---
 
-## 8. Complete Documentation Index
+## 8. Phase 5 Verification Record
+
+- **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
+- **Automated Verification Suite (`scripts/verify-phase5.ts`)**: 98/98 passed (100% pass rate).
+- **All Suites (`npm run test:verify:all`)**: 397/397 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), Phase 3 (87), Phase 4 (87), and Phase 5 (98).
+- **Doctor Live OPD Queue Architecture**:
+  - Built `src/app/(doctor)/queue.tsx`, `/doctor/queue`, and `/queue` featuring sticky real-time Cabin Presence Switcher (`CabinPresenceSwitcher`) with `IN_CABIN` (Green indicator: "In Cabin"), `STEPPED_OUT` (Amber indicator: "Stepped Out", with quick return time selector sheet: 10m, 15m, 30m, 45m or custom modal), and `NOT_IN_CABIN` (Gray/Red indicator: "Not in Cabin").
+  - Optimistic UI state updates with automatic rollback and error recovery upon network failure calling `api.updateCabinPresence`.
+  - Shift Switcher & Venue Selector (`DoctorShiftSelector`) enabling doctors practicing across multiple clinics and shifts to dynamically filter queue telemetry.
+  - Queue Segmented View (`PatientQueueCard`) separating `Waiting` (ordered ascending by `queueNumber`, with "Checked-In at Clinic" physical arrival indicator), `In Consultation` (active patient with pulse indicator), and `Completed` visits.
+  - Atomic patient queue actions: `Call to Cabin` (`api.callPatient`), `Hold / Step Out` (`api.holdConsultation`), and `Open Consultation`.
+- **OPD Consultation Room (`src/app/(doctor)/consultation/[id].tsx` & `/doctor/consultation/[id]`)**:
+  - Patient Summary Card: Name, age, gender, phone (`formatIndianPhone`), dependent patient banner, and chief complaint / symptoms.
+  - Clinical Vitals Card (`VitalsCard`): Real-time physiological bounds validation for Blood Pressure (systolic 60–260 / diastolic 40–160 mmHg, `systolic > diastolic`), Pulse (30–220 bpm), Body Temperature (90.0°F–110.0°F), and Weight (1.0–350.0 kg).
+  - Clinical Diagnosis & Notes: Assessment field, observations textarea, and patient advice.
+  - One-tap `Complete & Finish Consultation` calling `api.completeAppointment`, confirming encounter closure and directing the patient to the front desk for physical prescription collection and checkout.
+- **Doctor Schedule & Leave Manager (`src/app/(doctor)/schedule.tsx` & `/doctor/schedule`)**:
+  - Apple HIG 7-Day circular discs (`M T W T F S S`) with quick presets (`Weekdays`, `Mon-Sat`, `All 7`).
+  - Shift Capacity Configuration: Start/end timings, max patient capacity, and dynamic average consultation minutes calculation (`calculateAverageConsultationMinutes`) supporting overnight shifts.
+  - Emergency "Take Leave Today" toggle calling `api.addDoctorLeave(doctorId, { type: 'TODAY' })` to immediately halt new tokens.
+  - Scheduled Absence Manager: Date-range picker for future vacation dates (`isDoctorOnLeave`) and leave cancellation.
+- **Doctor Profile & Affiliations (`src/app/(doctor)/profile.tsx` & `/doctor/profile`)**:
+  - Cloudflare R2 avatar photo upload integrated with `expo-image-picker` with compression quality (`quality: 0.8`) and direct multipart upload to `api.uploadAvatar`.
+  - Clinic Affiliations Management: Lists active affiliated clinics and handles incoming clinic requests with one-tap `Accept` and `Reject` actions (`api.respondToClinicAffiliation`).
+
+---
+
+## 9. Complete Documentation Index
 
 - **Product Specification**: [MediArca_Feature_Specification.md](file:///./MediArca_Feature_Specification.md)
 - **Mobile Design System**: [MOBILE_DESIGN.md](file:///./MOBILE_DESIGN.md)
@@ -151,3 +178,5 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
   - [ADR 006: Hardware-Backed SecureStore Session Management](file:///./docs/decisions/006-secure-store-session-management.md)
   - [ADR 007: Patient Discovery & Zero-Upfront Token Booking](file:///./docs/decisions/007-patient-discovery-and-zero-upfront-booking.md)
   - [ADR 008: Live Queue Ticket & Hardware Camera Check-In](file:///./docs/decisions/008-live-queue-ticket-and-hardware-camera-checkin.md)
+  - [ADR 009: Doctor OPD Live Queue Console & Consultation Workflow](file:///./docs/decisions/009-doctor-opd-console-and-consultation-workflow.md)
+

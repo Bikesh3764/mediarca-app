@@ -135,8 +135,8 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 ## 8. Phase 5 Verification Record
 
 - **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
-- **Automated Verification Suite (`scripts/verify-phase5.ts`)**: 98/98 passed (100% pass rate).
-- **All Suites (`npm run test:verify:all`)**: 397/397 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), Phase 3 (87), Phase 4 (87), and Phase 5 (98).
+- **Automated Verification Suite (`scripts/verify-phase5.ts`)**: 108/108 passed (100% pass rate).
+- **All Suites (`npm run test:verify:all`)**: 407/407 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), Phase 3 (87), Phase 4 (87), and Phase 5 (108).
 - **Doctor Live OPD Queue Architecture**:
   - Built `src/app/(doctor)/queue.tsx`, `/doctor/queue`, and `/queue` featuring sticky real-time Cabin Presence Switcher (`CabinPresenceSwitcher`) with `IN_CABIN` (Green indicator: "In Cabin"), `STEPPED_OUT` (Amber indicator: "Stepped Out", with quick return time selector sheet: 10m, 15m, 30m, 45m or custom modal), and `NOT_IN_CABIN` (Gray/Red indicator: "Not in Cabin").
   - Optimistic UI state updates with automatic rollback and error recovery upon network failure calling `api.updateCabinPresence`.

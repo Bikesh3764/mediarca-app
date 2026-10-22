@@ -143,21 +143,9 @@ export default function DoctorConsultationScreen() {
     }
   };
 
-  // One-Tap Complete & Finish Consultation
-  const handleCompleteConsultation = async () => {
+  // Submit completion payload to backend
+  const submitCompletion = async () => {
     if (!appointment) return;
-
-    // Validate vitals
-    const validation = validateAllVitals(vitals);
-    if (!validation.isValid) {
-      setVitalsErrors(validation.errors);
-      Alert.alert(
-        'Vitals Validation Error',
-        'One or more vitals are outside permitted clinical bounds. Please correct before completing.'
-      );
-      return;
-    }
-
     setSubmitting(true);
     setErrorMsg(null);
 
@@ -194,6 +182,39 @@ export default function DoctorConsultationScreen() {
       setErrorMsg(err?.message || 'Failed to complete consultation.');
       setSubmitting(false);
     }
+  };
+
+  // One-Tap Complete & Finish Consultation
+  const handleCompleteConsultation = async () => {
+    if (!appointment) return;
+
+    // Validate vitals
+    const validation = validateAllVitals(vitals);
+    if (!validation.isValid) {
+      setVitalsErrors(validation.errors);
+      Alert.alert(
+        'Vitals Validation Error',
+        'One or more vitals are outside permitted clinical bounds. Please correct before completing.'
+      );
+      return;
+    }
+
+    if (!isPatientArrivalVerified(appointment)) {
+      Alert.alert(
+        'Arrival Not Verified',
+        'This patient has not yet checked in at the clinic desk. Finalizing the encounter may be rejected by the healthcare network until arrival is marked.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Complete Anyway',
+            onPress: () => submitCompletion(),
+          },
+        ]
+      );
+      return;
+    }
+
+    await submitCompletion();
   };
 
   if (loading) {

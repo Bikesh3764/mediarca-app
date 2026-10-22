@@ -52,11 +52,11 @@ In Indian outpatient clinics and polyclinics, doctors operate under intense pati
    - **Clinic Affiliations Management**: Lists active affiliated clinics and handles incoming clinic requests with one-tap `Accept` and `Reject` actions (`api.respondToClinicAffiliation`).
 
 5. **Automated Verification Suite (`scripts/verify-phase5.ts`)**:
-   - 98 dedicated automated test assertions verifying BP bounds, inverted pressures, pulse ranges, temperature ranges, weight limits, expected return time math, queue partitioning, ascending token ordering, arrival check-in flags, shift consultation duration arithmetic, HIG weekday discs, leave range detection, and live Render backend doctor queries.
+   - 108 dedicated automated test assertions verifying BP bounds (including unit suffixes like 120/80 mmHg), inverted pressures, pulse ranges, temperature ranges, weight limits, expected return time math in IST UTC+05:30 across timezones, queue partitioning with HOLD/CALLING/CONFIRMED statuses, ascending token ordering, arrival check-in flags, shift consultation duration arithmetic, HIG weekday discs, historical TODAY leave isolation, timezone-safe Mon-Sat practice day calculations, and live Render backend doctor queries.
 
 ## Consequences
 - Doctors have complete operational control over their cabin availability, eliminating waiting room uncertainty for patients.
 - Clinical data entry is protected by strict physiological bounds, preventing erroneous medical records.
 - Seamless multi-shift and multi-clinic support accommodates modern Indian polyclinic workflows.
 - Zero-upfront payment policy and prescription handover are clearly communicated at encounter finish.
-- Zero TypeScript errors (`npm run typecheck`) and 397/397 passing tests across all test suites ensure rock-solid production stability.
+- Zero TypeScript errors (`npm run typecheck`) and 407/407 passing tests across all test suites ensure rock-solid production stability.

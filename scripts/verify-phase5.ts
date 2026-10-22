@@ -61,6 +61,12 @@ async function runPhase5Verification() {
   const spacedBp = validateBloodPressure(' 130 / 85 ');
   assert(spacedBp.isValid === true, 'Handles spaced blood pressure format');
 
+  const unitSuffixedBp = validateBloodPressure('120/80 mmHg');
+  assert(unitSuffixedBp.isValid === true && unitSuffixedBp.systolic === 120 && unitSuffixedBp.diastolic === 80, 'Handles unit-suffixed blood pressure format (120/80 mmHg)');
+
+  const spacedUnitSuffixedBp = validateBloodPressure(' 135 / 85 mm hg ');
+  assert(spacedUnitSuffixedBp.isValid === true && spacedUnitSuffixedBp.systolic === 135 && spacedUnitSuffixedBp.diastolic === 85, 'Handles spaced unit-suffixed format (135 / 85 mm hg)');
+
   const lowerBoundBp = validateBloodPressure('60/40');
   assert(lowerBoundBp.isValid === true, 'Boundary 60/40 is valid BP');
 
@@ -262,6 +268,18 @@ async function runPhase5Verification() {
   assert(emptyPartition.inConsultation === null, 'No in-consultation on empty queue');
   assert(emptyPartition.completed.length === 0, 'No completed on empty queue');
 
+  // Edge case: HOLD, CALLING, and CONFIRMED appointment statuses
+  const holdAndCallingMock: any[] = [
+    { id: 'appt_c1', queueNumber: 1, status: 'CALLING', patientName: 'Calling Patient' },
+    { id: 'appt_h1', queueNumber: 2, status: 'HOLD', patientName: 'Held Patient' },
+    { id: 'appt_cf1', queueNumber: 3, status: 'CONFIRMED', patientName: 'Confirmed Patient' },
+  ];
+  const holdCallingPartition = partitionDoctorQueue(holdAndCallingMock);
+  assert(holdCallingPartition.inConsultation?.patientName === 'Calling Patient', 'CALLING status correctly populates inConsultation');
+  assert(holdCallingPartition.waiting.length === 2, 'HOLD and CONFIRMED statuses are safely assigned to waiting');
+  assert(holdCallingPartition.waiting[0].patientName === 'Held Patient', 'Held patient remains in waiting queue');
+  assert(holdCallingPartition.waiting[1].patientName === 'Confirmed Patient', 'Confirmed patient remains in waiting queue');
+
   // ----------------------------------------------------
   // 4. Doctor Schedule & Shift Consultation Arithmetic
   // ----------------------------------------------------
@@ -325,10 +343,32 @@ async function runPhase5Verification() {
   assert(isDoctorOnLeave('2026-11-05', mockLeaves) === true, 'Detects end date of DATE_RANGE leave (Nov 5)');
   assert(isDoctorOnLeave('2026-11-06', mockLeaves) === false, 'Date outside leave range is not on leave (Nov 6)');
 
+  // Historical TODAY leave record from previous date must NOT flag doctor on leave today
+  const historicalLeave: DoctorLeave[] = [
+    {
+      id: 'leave_past_today',
+      type: 'TODAY',
+      startDate: '2026-10-01',
+      endDate: '2026-10-01',
+      reason: 'Past Emergency Leave',
+      createdAt: '2026-10-01T08:00:00Z',
+      createdByRole: 'DOCTOR',
+    },
+  ];
+  assert(isDoctorOnLeave(todayStr, historicalLeave) === false, 'Historical TODAY leave from prior date does not flag doctor on leave today');
+  assert(isDoctorOnLeave('2026-10-01', historicalLeave) === true, 'Historical TODAY leave correctly marks only its own historical date');
+
   // Doctor Practicing Calculation
   const workingDays = ['MON', 'TUE', 'WED', 'THU', 'FRI']; // No SAT, SUN
   const sundayStatus = isDoctorPracticingOnDate('2026-10-25', workingDays, []); // Sunday
   assert(sundayStatus.isPracticing === false && sundayStatus.reason === 'OFF_DAY', 'Sunday is flagged as OFF_DAY when not in workingDays');
+
+  // Timezone-safe practice day mapping (Mon-Sat practice, Sunday off)
+  const monSatWorkingDays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+  const sundayMonSat = isDoctorPracticingOnDate('2026-10-25', monSatWorkingDays, []); // Sunday
+  assert(sundayMonSat.isPracticing === false && sundayMonSat.reason === 'OFF_DAY', 'Sunday is strictly OFF_DAY under Mon-Sat practice schedule');
+  const saturdayMonSat = isDoctorPracticingOnDate('2026-10-24', monSatWorkingDays, []); // Saturday
+  assert(saturdayMonSat.isPracticing === true, 'Saturday is correctly recognized as practicing under Mon-Sat schedule');
 
   const leaveDayStatus = isDoctorPracticingOnDate(todayStr, workingDays, mockLeaves);
   assert(leaveDayStatus.isPracticing === false && leaveDayStatus.reason === 'ON_LEAVE', 'Flagged as ON_LEAVE on today leave');

@@ -26,6 +26,7 @@ import { useAuth } from '@/context/AuthContext';
 import {
   CabinPresenceStatus,
   partitionDoctorQueue,
+  isPatientArrivalVerified,
 } from '@/services/doctorUtils';
 import { CabinPresenceSwitcher } from '@/components/doctor/CabinPresenceSwitcher';
 import { DoctorShiftSelector } from '@/components/doctor/DoctorShiftSelector';
@@ -145,13 +146,12 @@ export default function DoctorQueueScreen() {
     return partitionDoctorQueue(appointments);
   }, [appointments]);
 
-  // Handle Call to Cabin
-  const handleCallPatient = async (appointment: Appointment) => {
+  // Execute call transaction
+  const executeCall = async (appointment: Appointment) => {
     setActionProcessingId(appointment.id);
     setActionProcessingType('CALL');
     try {
       await api.callPatient(appointment.id);
-      // Auto switch to In Consultation or refresh
       await fetchQueueData(false);
       setActiveSegment('IN_CONSULTATION');
     } catch (err: any) {
@@ -160,6 +160,59 @@ export default function DoctorQueueScreen() {
       setActionProcessingId(null);
       setActionProcessingType(null);
     }
+  };
+
+  const promptUnverifiedArrival = (appointment: Appointment) => {
+    Alert.alert(
+      'Patient Arrival Pending',
+      'This patient has not yet checked in at the clinic desk. In-cabin consultation requires verified physical arrival.',
+      [
+        { text: 'Wait for Arrival', style: 'cancel' },
+        {
+          text: 'Call Anyway',
+          onPress: () => executeCall(appointment),
+        },
+      ]
+    );
+  };
+
+  // Handle Call to Cabin with presence check & arrival verification
+  const handleCallPatient = async (appointment: Appointment) => {
+    if (cabinStatus !== 'IN_CABIN') {
+      const statusLabel = cabinStatus === 'STEPPED_OUT' ? 'Stepped Out' : 'Not in Cabin';
+      Alert.alert(
+        'Set Presence to In Cabin?',
+        `You are currently marked as '${statusLabel}'. Your cabin presence will be set to 'In Cabin' to call this patient into consultation.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Switch & Call',
+            onPress: async () => {
+              try {
+                await api.updateCabinPresence({ status: 'IN_CABIN' });
+                setCabinStatus('IN_CABIN');
+                setExpectedReturnTime(null);
+                if (!isPatientArrivalVerified(appointment)) {
+                  promptUnverifiedArrival(appointment);
+                } else {
+                  await executeCall(appointment);
+                }
+              } catch (err: any) {
+                Alert.alert('Status Update Failed', err?.message || 'Could not update cabin presence.');
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+
+    if (!isPatientArrivalVerified(appointment)) {
+      promptUnverifiedArrival(appointment);
+      return;
+    }
+
+    await executeCall(appointment);
   };
 
   // Handle Hold

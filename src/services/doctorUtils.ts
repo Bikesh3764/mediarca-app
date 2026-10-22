@@ -1,4 +1,11 @@
-import { Appointment, DoctorLeave, getLocalDateString, timeToMinutes } from './api';
+import {
+  Appointment,
+  DoctorLeave,
+  getLocalDateString,
+  timeToMinutes,
+  getIndianTimeMinutes,
+  getDayOfWeekCode,
+} from './api';
 
 // ==========================================
 // 1. Clinical Vitals Validation
@@ -20,6 +27,7 @@ export interface VitalsValidationResult {
  * - Systolic: 60 - 260 mmHg
  * - Diastolic: 40 - 160 mmHg
  * - Systolic must be strictly greater than Diastolic
+ * Supports optional units suffix (e.g. "120/80 mmHg").
  */
 export function validateBloodPressure(bp: string | null | undefined): {
   isValid: boolean;
@@ -31,7 +39,8 @@ export function validateBloodPressure(bp: string | null | undefined): {
     return { isValid: true };
   }
 
-  const clean = bp.trim();
+  // Strip trailing "mmHg" or "mm hg" if user/clinician typed it
+  const clean = bp.trim().replace(/\s*mm\s*hg$/i, '').trim();
   const match = clean.match(/^(\d{2,3})\s*[/\\-]\s*(\d{2,3})$/);
   if (!match) {
     return {
@@ -210,15 +219,17 @@ export type CabinPresenceStatus = 'IN_CABIN' | 'STEPPED_OUT' | 'NOT_IN_CABIN';
 export const QUICK_RETURN_MINUTES = [10, 15, 30, 45] as const;
 
 /**
- * Calculates a formatted 12-hour time string in IST when given future minutes.
- * E.g., if now is 11:30 AM and minutes is 15 -> "11:45 AM"
+ * Calculates a formatted 12-hour time string in IST (Asia/Kolkata UTC+05:30)
+ * when given future minutes.
+ * E.g., if now is 11:30 AM IST and minutes is 15 -> "11:45 AM"
  */
 export function calculateExpectedReturnTime(minutes: number, baseDate?: Date): string {
-  const date = baseDate ? new Date(baseDate.getTime()) : new Date();
-  date.setMinutes(date.getMinutes() + minutes);
+  const d = baseDate ? new Date(baseDate.getTime()) : new Date();
+  const currentIstMinutes = getIndianTimeMinutes(d);
+  const targetMinutes = ((currentIstMinutes + minutes) % (24 * 60) + 24 * 60) % (24 * 60);
 
-  const hours = date.getHours();
-  const mins = date.getMinutes();
+  const hours = Math.floor(targetMinutes / 60);
+  const mins = targetMinutes % 60;
   const ampm = hours >= 12 ? 'PM' : 'AM';
   const displayHours = hours % 12 === 0 ? 12 : hours % 12;
   const displayMinutes = mins.toString().padStart(2, '0');
@@ -250,6 +261,8 @@ export interface PartitionedQueue {
 /**
  * Segments appointment array into Waiting, In Consultation, and Completed.
  * Waiting is ordered by queueNumber ascending.
+ * Recognizes IN_CONSULTATION and CALLING as active cabin visits.
+ * Treats WAITING, PENDING_APPROVAL, HOLD, CHECKED_IN, CONFIRMED, BOOKED as waiting queue.
  */
 export function partitionDoctorQueue(appointments: Appointment[]): PartitionedQueue {
   if (!Array.isArray(appointments)) {
@@ -267,7 +280,7 @@ export function partitionDoctorQueue(appointments: Appointment[]): PartitionedQu
 
   for (const appt of appointments) {
     const status = (appt.status || '').toUpperCase();
-    if (status === 'IN_CONSULTATION') {
+    if (status === 'IN_CONSULTATION' || status === 'CALLING') {
       // Pick first active consultation
       if (!inConsultation) {
         inConsultation = appt;
@@ -276,7 +289,17 @@ export function partitionDoctorQueue(appointments: Appointment[]): PartitionedQu
       }
     } else if (status === 'COMPLETED') {
       completed.push(appt);
-    } else if (status === 'WAITING' || status === 'PENDING_APPROVAL') {
+    } else if (
+      status === 'WAITING' ||
+      status === 'PENDING_APPROVAL' ||
+      status === 'HOLD' ||
+      status === 'CHECKED_IN' ||
+      status === 'CONFIRMED' ||
+      status === 'BOOKED'
+    ) {
+      waiting.push(appt);
+    } else if (status !== 'CANCELLED' && status !== 'REJECTED' && status !== 'EXPIRED') {
+      // Fallback for any other active state
       waiting.push(appt);
     }
   }
@@ -347,6 +370,7 @@ export function calculateAverageConsultationMinutes(
 
 /**
  * Checks if a doctor is currently on leave on a given date (YYYY-MM-DD).
+ * Historical TODAY leaves are scoped strictly to the date they were created.
  */
 export function isDoctorOnLeave(dateStr: string, leaves?: DoctorLeave[] | null): boolean {
   if (!leaves || !Array.isArray(leaves) || leaves.length === 0) {
@@ -358,9 +382,13 @@ export function isDoctorOnLeave(dateStr: string, leaves?: DoctorLeave[] | null):
 
   for (const leave of leaves) {
     if (leave.type === 'TODAY') {
-      const leaveDate = leave.startDate || (leave as any).date || todayStr;
-      if (leaveDate === targetDate) return true;
-      if (targetDate === todayStr) return true;
+      const leaveDate = leave.startDate || (leave as any).date;
+      if (leaveDate) {
+        if (leaveDate === targetDate) return true;
+      } else {
+        // Fallback only if no date was recorded on the leave object
+        if (targetDate === todayStr) return true;
+      }
     } else if (leave.type === 'DATE_RANGE') {
       const start = leave.startDate;
       const end = leave.endDate || leave.startDate;
@@ -375,6 +403,7 @@ export function isDoctorOnLeave(dateStr: string, leaves?: DoctorLeave[] | null):
 
 /**
  * Determines whether a doctor is practicing on a given date based on working days and leaves.
+ * Uses getDayOfWeekCode for timezone-safe UTC/IST weekday calculation.
  */
 export function isDoctorPracticingOnDate(
   dateStr: string,
@@ -385,9 +414,7 @@ export function isDoctorPracticingOnDate(
     return { isPracticing: false, reason: 'ON_LEAVE' };
   }
 
-  const parsedDate = new Date(`${dateStr}T00:00:00+05:30`);
-  const dayIdx = (parsedDate.getDay() + 6) % 7; // 0=MON, 6=SUN
-  const weekdayCode = APPLE_HIG_WEEKDAYS[dayIdx].code;
+  const weekdayCode = getDayOfWeekCode(dateStr);
 
   if (!workingDays || !workingDays.includes(weekdayCode)) {
     return { isPracticing: false, reason: 'OFF_DAY' };

@@ -53,8 +53,8 @@ Execute Phase 5 of the MediArca native mobile application for the Google Play St
    - Updated `PROJECT.md` and `docs/tasks/current-task.md`.
 
 6. **Automated Verification Suite**:
-   - Built `scripts/verify-phase5.ts` testing 98 assertions across BP bounds (systolic 60-260, diastolic 40-160, systolic > diastolic), pulse ranges, temperature ranges, weight limits, expected return time math, queue partitioning, ascending token ordering, arrival check-in flags, shift consultation duration arithmetic, HIG weekday discs, leave range detection, and live Render backend doctor queries.
-   - Total test assertions across all suites: 397/397 tests passing (100%).
+   - Built `scripts/verify-phase5.ts` testing 108 assertions across BP bounds (systolic 60-260, diastolic 40-160, systolic > diastolic, unit suffixes), pulse ranges, temperature ranges, weight limits, expected return time math in IST UTC+05:30 across timezones, queue partitioning (including HOLD/CALLING/CONFIRMED), ascending token ordering, arrival check-in flags, shift consultation duration arithmetic, HIG weekday discs, historical TODAY leave isolation, timezone-safe Mon-Sat practice day calculations, and live Render backend doctor queries.
+   - Total test assertions across all suites: 407/407 tests passing (100%).
 
 ---
 
@@ -65,8 +65,8 @@ Execute Phase 5 of the MediArca native mobile application for the Google Play St
 - [x] Phase 2 Automated Suite: `npm run test:verify:phase2` passes 61/61 tests (100%).
 - [x] Phase 3 Automated Suite: `npm run test:verify:phase3` passes 87/87 tests (100%).
 - [x] Phase 4 Automated Suite: `npm run test:verify:phase4` passes 87/87 tests (100%).
-- [x] Phase 5 Automated Suite: `npm run test:verify:phase5` passes 98/98 tests (100%).
-- [x] All Tests Suite: `npm run test:verify:all` passes 397/397 assertions (100%).
+- [x] Phase 5 Automated Suite: `npm run test:verify:phase5` passes 108/108 tests (100%).
+- [x] All Tests Suite: `npm run test:verify:all` passes 407/407 assertions (100%).
 - [x] Sticky Header Cabin Presence Switcher with In Cabin, Stepped Out (with 10m/15m/30m/45m/custom modal), and Not in Cabin verified.
 - [x] Shift Switcher and Clinic Selector for multi-shift doctors verified.
 - [x] Queue segmented view (Waiting ordered by token number, In Cabin, Completed) verified.

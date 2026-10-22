@@ -1,41 +1,54 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+# MediArca Mobile App: AI Agent Guidelines (AGENTS.md)
 
-## Expo has changed — do not trust your training data
+This repository contains the native mobile application for the **MediArca Healthcare Platform**, built with Expo SDK 58, Expo Router, TypeScript, and Apple Human Interface Guidelines (`MOBILE_DESIGN.md`).
 
-Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
+---
 
-1. Read the major version of the `expo` package in `package.json`.
-2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
-3. For anything else, fetch https://docs.expo.dev/llms.txt — an index of all Expo docs with corrections to common LLM misconceptions. Follow its links to the specific page you need; never answer from memory.
+## 1. Core Platform Guidelines
 
-## Commands
+1. **Live Production API**:
+   - URL: `https://mediarca-mdwk.onrender.com/api`
+   - Health check: `https://mediarca-mdwk.onrender.com/healthz`
+   - All network calls must pass through `src/services/api.ts` and `src/services/safeFetch.ts`.
+   - Never hardcode alternative localhost URLs in production screens.
 
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
+2. **Mutation Idempotency Safety**:
+   - `safeFetch` strictly enforces ZERO automatic retries for mutations (`POST`, `PUT`, `PATCH`, `DELETE`).
+   - Retries with exponential backoff and jitter are ONLY permitted on idempotent `GET` and `HEAD` operations on transient 502/503/504 status codes.
+
+3. **Timezone Rule (IST Asia/Kolkata)**:
+   - All clinic shift schedules, token estimates, and doctor presence calculations operate in Indian Standard Time (`Asia/Kolkata`, UTC +05:30).
+   - Use `getLocalDateString()` and `getIndianTimeMinutes()` from `src/services/api.ts` rather than native device local dates.
+
+4. **Apple HIG Design System (`MOBILE_DESIGN.md`)**:
+   - Action Blue (`#0066cc`) is reserved exclusively for interactive elements.
+   - Parchment canvas (`#f5f5f7`) and pure white (`#ffffff`) alternating rhythm.
+   - Strictly 44x44pt minimum touch targets (`TouchTarget.minSize`).
+   - Full pill buttons (`BorderRadius.pill`).
+
+5. **Navigation Architecture**:
+   - Use file-based routing in `src/app/`.
+   - Never put business logic or heavy state machines inside `src/app/` files; keep logic inside `src/services/`, `src/context/`, and `src/components/`.
+
+---
+
+## 2. Essential CLI Commands
 
 ```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
+# Verify TypeScript without emitting JS
+npx tsc --noEmit
+
+# Install Expo-compatible dependencies (resolves matching SDK versions)
+npx expo install <package>
+
+# Start Metro bundler with interactive QR code
+npm start
+
+# Run on Android emulator / device
+npm run android
+
+# Cloud build for Google Play Store (.aab)
+npx eas-cli@latest build --platform android --profile production
 ```
 
-Run lint and typecheck before declaring any task done.
-
-## Navigation & Routing
-
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
-
-## Building with EAS
-
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
-Docs: https://docs.expo.dev/eas/index.md
-
-## Rules
-
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
-- Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+Always run `npx tsc --noEmit` before finishing any task to guarantee zero type errors.

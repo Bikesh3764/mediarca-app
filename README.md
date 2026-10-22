@@ -1,56 +1,132 @@
-# Welcome to your Expo app 👋
+# MediArca Mobile App (Android & Google Play Store)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> **Official Mobile Application for MediArca Healthcare Platform**  
+> Built with **React Native**, **Expo SDK 58**, **TypeScript**, and **Apple Human Interface Guidelines (Apple HIG)**.  
+> Targeting the **Google Play Store** (Android 14/15, Target SDK 34+) and iOS App Store.
 
-## Get started
+---
 
-1. Install dependencies
+## 🌐 Live Production Infrastructure
 
-   ```bash
-   npm install
-   ```
+The mobile app connects directly to the existing production backend and database:
 
-2. Start the app
+- **Live Production API**: [https://mediarca-mdwk.onrender.com/api](https://mediarca-mdwk.onrender.com/api)
+- **Backend Health Check**: [https://mediarca-mdwk.onrender.com/healthz](https://mediarca-mdwk.onrender.com/healthz)
+- **Web App Reference**: [https://bikesh3764.github.io/MediArca/](https://bikesh3764.github.io/MediArca/)
+- **Database**: Supabase Cloud PostgreSQL (`db.gibgtnzhecexgwximtpi.supabase.co`, Mumbai)
+- **Asset Storage & CDN**: Cloudflare R2 (`https://pub-a590817d9f404eb889f6482b025ea9ad.r2.dev`)
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 📱 Key Features
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+1. **Live Queue Radar Pass (`My Passes`)**: Real-time token number, patients ahead, estimated consultation time, and arrival check-in status.
+2. **One-Tap Receptionist Direct Dial**: Instant phone dialer (`Linking.openURL`) to coordinate UPI or desk payments without upfront payment friction.
+3. **Hardware QR Camera Check-In**: 60fps native camera barcode scanner (`expo-camera`) to scan clinic reception standees upon arrival.
+4. **Doctor Cabin Presence Indicator**: Real-time status badges (`In Cabin`, `Stepped Out` with return time, `Not In Cabin`).
+5. **Multi-Role Adaptive Interface**: Role-aware interface adapting automatically for **Patients**, **Doctors**, **Receptionists**, and **Clinics**.
+6. **Play Store Compliance**: In-app self-serve account deletion, strict permissions rationale (`CAMERA` and `VIBRATE` only), and zero upfront payment disclosure.
 
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 🎨 Design Philosophy (`MOBILE_DESIGN.md`)
 
-When you're ready, run:
+- **Single Action Blue (`#0066cc`)**: Interactive touch points reserved for one primary action color.
+- **Alternating Canvas Rhythm**: Clean separation between Parchment (`#f5f5f7`) and Pure White (`#ffffff`).
+- **44x44pt Minimum Touch Target**: Strictly enforced across all buttons, inputs, and tab triggers to prevent touch fatigue.
+- **Full Pill Action Buttons**: Tactile buttons (`borderRadius: 9999`) with subtle press feedback.
 
+---
+
+## 🚀 Quick Start & Development
+
+### Prerequisites
+- Node.js 18+ (tested with v24.15.0)
+- npm 9+
+- **Expo Go** app installed on your physical Android or iOS device from Google Play or Apple App Store.
+
+### Installation
 ```bash
-npm run reset-project
+# Clone the repository
+git clone https://github.com/Bikesh3764/mediarca-app.git
+cd mediarca-app
+
+# Install dependencies
+npm install
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+### Running with Expo Go
+```bash
+# Start Metro bundler with QR code in terminal
+npm start
 
-### Other setup steps
+# Or start directly for Android
+npm run android
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+# Or run in Web preview
+npm run web
+```
+Scan the QR code displayed in the terminal using the **Expo Go** app on your Android phone to test live with instant fast refresh.
 
-## Learn more
+---
 
-To learn more about developing your project with Expo, look at the following resources:
+## 📦 Building for Google Play Store (EAS Cloud Build)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+This project is pre-configured for **EAS Cloud Builds**, which compile production `.aab` bundles entirely in the cloud without requiring local Android Studio or NDK setup on Windows.
 
-## Join the community
+```bash
+# 1. Install EAS CLI globally
+npm install -g eas-cli
 
-Join our community of developers creating universal apps.
+# 2. Log in to your Expo account
+eas login
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# 3. Build installable APK for internal device testing
+eas build --platform android --profile preview
+
+# 4. Build signed Android App Bundle (.aab) for Google Play Store
+eas build --platform android --profile production
+```
+
+---
+
+## 📂 Project Architecture
+
+```
+mediarca-app/
+├── assets/                     # App icons, splash screens, adaptive icons
+├── src/
+│   ├── app/                    # Expo Router file-based screens
+│   │   ├── _layout.tsx         # Root application layout
+│   │   ├── index.tsx           # Live Health & Telemetry dashboard
+│   │   └── explore.tsx         # Component explorer
+│   ├── components/
+│   │   ├── common/             # SafeAreaViewContainer, Header, StatusBadge
+│   │   └── ...
+│   ├── constants/
+│   │   ├── config.ts           # Endpoints, R2 URLs, storage keys
+│   │   └── theme.ts            # Apple HIG tokens, colors, 44px touch targets
+│   ├── services/
+│   │   ├── api.ts              # 2,500+ lines of typed API calls & date math
+│   │   └── safeFetch.ts        # Bounded 15s timeouts & idempotent retries
+│   └── utils/
+│       ├── indiaStates.ts      # 28 Indian States & 8 UTs
+│       └── phoneUtils.ts       # +91 phone sanitization, validation, RFC 3966
+├── ARCHITECTURE.md             # System topology and integration guide
+├── MOBILE_DESIGN.md            # Design system tokens and Apple HIG specs
+├── PROJECT.md                  # Implementation phase status tracker
+├── IMPLEMENTATION.md           # Technical blueprint and phase scope
+├── AGENTS.md                   # Agent guidelines and code standards
+├── app.json                    # Expo and Android application manifest
+└── package.json                # Dependencies and build scripts
+```
+
+---
+
+## 📄 Documentation Index
+
+- [Architecture Blueprint](file:///./ARCHITECTURE.md)
+- [Mobile Design System](file:///./MOBILE_DESIGN.md)
+- [Project Status Tracker](file:///./PROJECT.md)
+- [Technical Implementation](file:///./IMPLEMENTATION.md)
+- [Agent Workflow Guide](file:///./AGENTS.md)

@@ -1,9 +1,10 @@
 {
-  "name": "mediarca-mobile",
+  "name": "mediarca-app",
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/ui": "~58.0.22",
+    "@expo/vector-icons": "^15.0.2",
     "expo": "~58.0.17",
     "expo-constants": "~58.0.13",
     "expo-device": "~58.0.5",
@@ -37,7 +38,9 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
+    "test:verify": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase1.ts"
   },
   "private": true
 }

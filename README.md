@@ -125,8 +125,13 @@ mediarca-app/
 
 ## 📄 Documentation Index
 
-- [Architecture Blueprint](file:///./ARCHITECTURE.md)
-- [Mobile Design System](file:///./MOBILE_DESIGN.md)
-- [Project Status Tracker](file:///./PROJECT.md)
+- [Product Specification](file:///./MediArca_Feature_Specification.md)
+- [Architecture Blueprint](file:///./ARCHITECTURE.md) & [Detailed Architecture](file:///./docs/architecture.md)
+- [Mobile Design System (Apple HIG)](file:///./MOBILE_DESIGN.md)
+- [Project Status & Roadmap Tracker](file:///./PROJECT.md)
 - [Technical Implementation](file:///./IMPLEMENTATION.md)
 - [Agent Workflow Guide](file:///./AGENTS.md)
+- [Known Issues & Anti-Patterns](file:///./docs/known-issues.md)
+- [Active Sprint Tracker](file:///./docs/tasks/current-task.md)
+- [Architecture Decision Records (ADRs)](file:///./docs/decisions/001-apple-hig-design-system.md)
+

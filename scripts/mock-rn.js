@@ -44,5 +44,21 @@ Module.prototype.require = function (id) {
     };
   }
 
+  if (id === 'expo-router') {
+    return {
+      router: {
+        replace: () => {},
+        push: () => {},
+        back: () => {},
+      },
+      useRouter: () => ({
+        replace: () => {},
+        push: () => {},
+        back: () => {},
+      }),
+      useLocalSearchParams: () => ({}),
+    };
+  }
+
   return originalRequire.apply(this, arguments);
 };

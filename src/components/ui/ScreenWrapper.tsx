@@ -53,6 +53,7 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
         contentContainerStyle,
       ]}
       keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
       showsVerticalScrollIndicator={false}
       refreshControl={
         onRefresh ? (
@@ -65,11 +66,23 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
         ) : undefined
       }
     >
-      {children}
+      {dismissKeyboardOnTap ? (
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={styles.innerWrapper}>{children}</View>
+        </TouchableWithoutFeedback>
+      ) : (
+        children
+      )}
     </ScrollView>
   ) : (
     <View style={[styles.staticContent, containerPadding, contentContainerStyle]}>
-      {children}
+      {dismissKeyboardOnTap ? (
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={styles.innerWrapper}>{children}</View>
+        </TouchableWithoutFeedback>
+      ) : (
+        children
+      )}
     </View>
   );
 
@@ -79,13 +92,7 @@ export const ScreenWrapper: React.FC<ScreenWrapperProps> = ({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={keyboardVerticalOffset}
     >
-      {dismissKeyboardOnTap ? (
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          {content}
-        </TouchableWithoutFeedback>
-      ) : (
-        content
-      )}
+      {content}
     </KeyboardAvoidingView>
   );
 };
@@ -102,6 +109,9 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   staticContent: {
+    flex: 1,
+  },
+  innerWrapper: {
     flex: 1,
   },
 });

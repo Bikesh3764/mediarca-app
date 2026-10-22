@@ -54,6 +54,7 @@ export default function SignupScreen() {
   const [doctorConsultationFee, setDoctorConsultationFee] = useState('500');
   const [clinicAddress, setClinicAddress] = useState('');
   const [clinicCity, setClinicCity] = useState('');
+  const [clinicState, setClinicState] = useState('Maharashtra');
   const [patientGender, setPatientGender] = useState<'Male' | 'Female' | 'Other'>('Male');
 
   const [isLoading, setIsLoading] = useState(false);
@@ -104,15 +105,19 @@ export default function SignupScreen() {
     };
 
     if (selectedRole === 'DOCTOR') {
-      payload.specialty = doctorSpecialty;
-      payload.qualifications = doctorQualifications;
+      payload.specialty = doctorSpecialty.trim() || 'General Physician';
+      payload.qualifications = doctorQualifications.trim() || 'MBBS';
       payload.consultationFee = Number(doctorConsultationFee) || 500;
       payload.experienceYears = 5;
+      payload.checkingStartTime = '09:00';
+      payload.checkingEndTime = '13:00';
+      payload.avgConsultationMinutes = 15;
+      payload.maxDailyPatients = 25;
     } else if (selectedRole === 'CLINIC') {
       payload.clinicName = fullName.trim();
       payload.address = clinicAddress.trim() || 'Central Clinic Facility';
       payload.city = clinicCity.trim() || 'Mumbai';
-      payload.state = 'Maharashtra';
+      payload.state = clinicState.trim() || 'Maharashtra';
     } else if (selectedRole === 'PATIENT') {
       payload.gender = patientGender;
     }
@@ -251,9 +256,12 @@ export default function SignupScreen() {
             label="Mobile Number"
             placeholder="98200 12345"
             keyboardType="phone-pad"
-            maxLength={10}
+            maxLength={15}
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={(text) => {
+              setPhone(text.replace(/[^\d\s+-]/g, ''));
+              setErrorMessage(null);
+            }}
             prefixBadge="+91"
             helperText="10-digit Indian phone number"
           />
@@ -300,6 +308,12 @@ export default function SignupScreen() {
                 placeholder="Mumbai"
                 value={clinicCity}
                 onChangeText={setClinicCity}
+              />
+              <AppInput
+                label="State / Union Territory"
+                placeholder="Maharashtra"
+                value={clinicState}
+                onChangeText={setClinicState}
               />
             </View>
           ) : null}

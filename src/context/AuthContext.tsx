@@ -6,6 +6,7 @@ import React, {
   useCallback,
   ReactNode,
 } from 'react';
+import { router } from 'expo-router';
 import { api, setAuthToken, User } from '@/services/api';
 import {
   getStoredToken,
@@ -39,7 +40,7 @@ export interface AuthContextType {
   signup: (formData: any) => Promise<SignupResult>;
   verifyOtp: (email: string, otp: string, role?: UserRole) => Promise<User>;
   resendOtp: (email: string, role?: UserRole) => Promise<{ success: boolean; message: string }>;
-  logout: () => Promise<void>;
+  logout: (resetRoute?: boolean) => Promise<void>;
   refreshUser: () => Promise<User | null>;
   updateUser: (updatedUser: User) => Promise<void>;
 }
@@ -223,12 +224,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return await api.resendEmailOtp(email.trim().toLowerCase(), otpRole);
   };
 
-  const logout = async (): Promise<void> => {
+  const logout = async (resetRoute: boolean = true): Promise<void> => {
     setAuthToken(null);
     await clearStoredSession();
     setToken(null);
     setUser(null);
     setRoleState(null);
+    if (resetRoute) {
+      try {
+        router.replace('/(auth)/login');
+      } catch (navErr) {
+        console.warn('[AuthContext] Navigation reset on logout warning:', navErr);
+      }
+    }
   };
 
   const updateUser = async (updatedUser: User): Promise<void> => {

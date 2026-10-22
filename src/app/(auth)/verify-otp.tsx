@@ -66,21 +66,31 @@ export default function VerifyOtpScreen() {
     setErrorMessage(null);
     setSuccessNotice(null);
 
-    // Support fast paste of complete OTP (e.g. 6 digits pasted into any box)
+    // Clean non-digit characters
     const cleaned = text.replace(/\D/g, '');
-    if (cleaned.length > 1) {
-      const pastedDigits = cleaned.slice(0, OTP_LENGTH).split('');
-      const updated = Array(OTP_LENGTH).fill('');
-      for (let i = 0; i < pastedDigits.length; i++) {
-        updated[i] = pastedDigits[i];
-      }
-      setDigits(updated);
-      const nextFocus = Math.min(pastedDigits.length, OTP_LENGTH - 1);
-      inputRefs.current[nextFocus]?.focus();
+
+    // Case 1: Pasting full 6-digit OTP code into any box
+    if (cleaned.length >= OTP_LENGTH) {
+      const pasted = cleaned.slice(0, OTP_LENGTH).split('');
+      setDigits(pasted);
+      inputRefs.current[OTP_LENGTH - 1]?.focus();
       return;
     }
 
     const updated = [...digits];
+
+    // Case 2: User typed over an already-filled box (e.g. was '5', user entered '7' -> cleaned is '57' or '75')
+    if (cleaned.length > 1) {
+      const newChar = cleaned.slice(-1);
+      updated[index] = newChar;
+      setDigits(updated);
+      if (index < OTP_LENGTH - 1) {
+        inputRefs.current[index + 1]?.focus();
+      }
+      return;
+    }
+
+    // Case 3: Standard single digit entry or clearing
     updated[index] = cleaned;
     setDigits(updated);
 
@@ -130,6 +140,19 @@ export default function VerifyOtpScreen() {
       );
       router.replace('/');
     } catch (err: any) {
+      if (err.isAlreadyVerified || err.message?.toLowerCase().includes('already verified')) {
+        Alert.alert(
+          'Already Verified',
+          'Your email is already verified. Please sign in to your account.',
+          [
+            {
+              text: 'Sign In',
+              onPress: () => router.replace('/(auth)/login'),
+            },
+          ]
+        );
+        return;
+      }
       setErrorMessage(
         err.message || 'Invalid or expired verification code. Please request a new code.'
       );
@@ -246,7 +269,7 @@ export default function VerifyOtpScreen() {
                     }}
                     style={styles.digitInput}
                     keyboardType="number-pad"
-                    maxLength={1}
+                    maxLength={OTP_LENGTH}
                     value={digits[i]}
                     onChangeText={(text) => handleDigitChange(text, i)}
                     onKeyPress={(e) => handleKeyPress(e, i)}

@@ -29,6 +29,7 @@ const ROLES: { id: UserRole; label: string; icon: keyof typeof Ionicons.glyphMap
   { id: 'DOCTOR', label: 'Doctor', icon: 'medkit-outline' },
   { id: 'RECEPTIONIST', label: 'Desk', icon: 'clipboard-outline' },
   { id: 'CLINIC', label: 'Clinic', icon: 'business-outline' },
+  { id: 'ADMIN', label: 'Admin', icon: 'shield-checkmark-outline' },
 ];
 
 export default function LoginScreen() {
@@ -84,12 +85,18 @@ export default function LoginScreen() {
           pathname: '/(auth)/verify-otp',
           params: {
             email: err.email || identifier,
-            role: activeRole,
+            role: err.role || activeRole,
           },
         });
         return;
       }
-      setErrorMessage(err.message || 'Invalid credentials. Please try again.');
+      if (loginMode === 'phone' && (err.status === 401 || err.message?.toLowerCase().includes('invalid'))) {
+        setErrorMessage(
+          `No ${activeRole.toLowerCase()} account found matching this mobile number with the entered password. If you registered using an email address, please switch to the Email Address tab above.`
+        );
+      } else {
+        setErrorMessage(err.message || 'Invalid credentials. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -127,7 +134,12 @@ export default function LoginScreen() {
         {/* Role Switcher Tabs */}
         <View style={styles.roleTabsWrapper}>
           <Text style={styles.roleTabsLabel}>SELECT PORTAL ROLE</Text>
-          <View style={styles.roleTabsContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.roleTabsScrollContent}
+            style={styles.roleTabsContainer}
+          >
             {ROLES.map((r) => {
               const isActive = activeRole === r.id;
               return (
@@ -154,7 +166,7 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
         </View>
 
         {/* Main Login Card */}
@@ -238,11 +250,14 @@ export default function LoginScreen() {
               label="Mobile Number"
               placeholder="98200 12345"
               keyboardType="phone-pad"
-              maxLength={10}
+              maxLength={15}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(text) => {
+                setPhone(text.replace(/[^\d\s+-]/g, ''));
+                setErrorMessage(null);
+              }}
               prefixBadge="+91"
-              helperText="10-digit Indian mobile number"
+              helperText="10-digit Indian mobile number. (If registered via email, switch to Email tab.)"
             />
           )}
 
@@ -272,7 +287,7 @@ export default function LoginScreen() {
           />
 
           {/* Google Sign In Divider */}
-          {activeRole === 'PATIENT' || activeRole === 'DOCTOR' ? (
+          {activeRole === 'PATIENT' || activeRole === 'DOCTOR' || activeRole === 'CLINIC' ? (
             <>
               <View style={styles.dividerRow}>
                 <View style={styles.dividerLine} />
@@ -296,10 +311,12 @@ export default function LoginScreen() {
           <Text style={styles.footerPrompt}>
             {activeRole === 'RECEPTIONIST'
               ? 'Receptionist accounts are provisioned by Clinic Admin.'
+              : activeRole === 'ADMIN'
+              ? 'Administrator accounts are provisioned by System IT.'
               : "Don't have an account?"}
           </Text>
 
-          {activeRole !== 'RECEPTIONIST' ? (
+          {activeRole !== 'RECEPTIONIST' && activeRole !== 'ADMIN' ? (
             <TouchableOpacity
               onPress={() =>
                 router.push({
@@ -379,17 +396,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.one,
   },
   roleTabsContainer: {
-    flexDirection: 'row',
     backgroundColor: '#ebebf0',
     borderRadius: BorderRadius.pill,
     padding: 3,
   },
+  roleTabsScrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    minWidth: '100%',
+  },
   roleTab: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
+    paddingHorizontal: Spacing.three,
     borderRadius: BorderRadius.pill,
     minHeight: TouchTarget.minHeight,
   },

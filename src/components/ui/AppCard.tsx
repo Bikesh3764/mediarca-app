@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ViewStyle,
   StyleProp,
+  Platform,
 } from 'react-native';
 import { Colors, BorderRadius, Shadows, Spacing } from '@/constants/theme';
 
@@ -56,7 +57,7 @@ export const AppCard: React.FC<AppCardProps> = ({
 const styles = StyleSheet.create({
   base: {
     borderRadius: BorderRadius.card,
-    overflow: 'hidden',
+    overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
   },
   variantDefault: {
     backgroundColor: Colors.surfaceCard,

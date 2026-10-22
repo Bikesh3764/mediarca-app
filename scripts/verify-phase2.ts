@@ -129,6 +129,33 @@ async function runPhase2Verification() {
   assert(isValidOtp('12345a') === false, 'Alphanumeric OTP rejected');
   assert(isValidOtp('') === false, 'Empty OTP rejected');
 
+  // OTP paste and digit replacement simulation
+  const simulateDigitChange = (currentDigits: string[], incomingText: string, index: number): string[] => {
+    const cleaned = incomingText.replace(/\D/g, '');
+    if (cleaned.length >= 6) {
+      return cleaned.slice(0, 6).split('');
+    }
+    const updated = [...currentDigits];
+    if (cleaned.length > 1) {
+      updated[index] = cleaned.slice(-1);
+      return updated;
+    }
+    updated[index] = cleaned;
+    return updated;
+  };
+
+  const initialOtpBoxes = ['', '', '', '', '', ''];
+  const pasted = simulateDigitChange(initialOtpBoxes, '849201', 0);
+  assert(pasted.join('') === '849201', 'Pasting 6 digits populates all boxes correctly');
+
+  const pastedFromMiddle = simulateDigitChange(initialOtpBoxes, '849201', 2);
+  assert(pastedFromMiddle.join('') === '849201', 'Pasting into any box index populates entire OTP');
+
+  // Overwriting an existing filled box without wiping others
+  const filledOtp = ['8', '4', '9', '2', '0', '1'];
+  const overwritten = simulateDigitChange(filledOtp, '95', 2); // typed '5' over '9'
+  assert(overwritten.join('') === '845201', 'Typing new digit over existing box preserves other boxes');
+
   // Countdown timer format
   const formatTimer = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60);

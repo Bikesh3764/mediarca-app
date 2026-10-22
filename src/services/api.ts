@@ -1260,6 +1260,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
     if (data?.requiresVerification) {
       error.requiresVerification = true;
       error.email = data.email;
+      error.role = data.role;
     }
     if (data?.isAlreadyVerified) {
       error.isAlreadyVerified = true;
@@ -1277,7 +1278,17 @@ async function handleResponse<T>(res: Response): Promise<T> {
     }
     throw error;
   }
-  return data?.data !== undefined ? data.data : data;
+  if (data?.data !== undefined) {
+    if (typeof data.data === 'object' && data.data !== null && !Array.isArray(data.data)) {
+      return {
+        ...data.data,
+        message: data.message ?? data.data.message,
+        success: data.success ?? data.data.success,
+      };
+    }
+    return data.data;
+  }
+  return data;
 }
 
 export interface PaginationMeta {

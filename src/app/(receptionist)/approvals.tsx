@@ -11,6 +11,7 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -212,7 +213,7 @@ export default function ApprovalsScreen() {
             const rawDoc = appt.doctor?.user?.fullName || 'Practitioner';
             const docName = rawDoc.startsWith('Dr.') ? rawDoc : `Dr. ${rawDoc}`;
             const patientName = appt.patientName || appt.patient?.user?.fullName || 'Patient';
-            const phone = appt.patient?.user?.phone || 'N/A';
+            const phone = (appt as any).patientPhone || appt.patient?.user?.phone || 'N/A';
             const estToken = appt.estimatedQueueNumber || 1;
             const fee = appt.doctor?.consultationFee || 0;
             const isApproving = approvingId === appt.id;
@@ -248,6 +249,18 @@ export default function ApprovalsScreen() {
                       ) : null}
                     </View>
                   </View>
+
+                  {/* Call Quick Action */}
+                  {phone && phone !== 'N/A' && (
+                    <TouchableOpacity
+                      style={styles.callButton}
+                      onPress={() => Linking.openURL(toTelUri(phone)).catch(() => {})}
+                      activeOpacity={0.8}
+                      accessibilityLabel="Call Patient"
+                    >
+                      <Ionicons name="call" size={16} color={Colors.primary} />
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 {/* Booking Metadata */}
@@ -287,7 +300,7 @@ export default function ApprovalsScreen() {
                       setRejectingAppointment(appt);
                       setRejectReason('');
                     }}
-                    disabled={isApproving}
+                    disabled={isApproving || isRejecting}
                     activeOpacity={0.8}
                   >
                     <Ionicons name="close-circle-outline" size={16} color={Colors.danger} />
@@ -298,7 +311,7 @@ export default function ApprovalsScreen() {
                   <TouchableOpacity
                     style={styles.approveBtn}
                     onPress={() => handleApprove(appt)}
-                    disabled={isApproving}
+                    disabled={isApproving || isRejecting}
                     activeOpacity={0.85}
                   >
                     {isApproving ? (
@@ -543,6 +556,15 @@ const styles = StyleSheet.create({
   },
   patientInfoCol: {
     flex: 1,
+  },
+  callButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: Spacing.sm,
   },
   patientNameText: {
     fontSize: Typography.fontSize.headline,

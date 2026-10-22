@@ -53,8 +53,8 @@ Execute Phase 6 of the MediArca native mobile application for Google Play Store 
    - Updated `PROJECT.md` and `docs/tasks/current-task.md`.
 
 7. **Automated Verification Suite (`scripts/verify-phase6.ts`)**:
-   - Built dedicated Phase 6 suite testing 92 assertions covering walk-in dispenser payload validation (+91 phone, name bounds, age, dependents), temporary password guards, counter QR ticket parser across all formats, multi-doctor aggregation metrics, ascending queue token sorting, payment approval state machine transitions (`PENDING_APPROVAL` → `WAITING` + official token, rejection handling, role authorization), Apple HIG design tokens, and live Render backend receptionist API queries.
-   - Total test assertions across all suites: 499/499 tests passing (100%).
+   - Built dedicated Phase 6 suite testing 100 assertions covering walk-in dispenser payload validation (+91 phone, name bounds, age, dependents, alphabetical checks), temporary password guards, counter QR ticket parser across all formats (including single-quoted JSON and custom ticketId query params), multi-doctor aggregation metrics, ascending queue token sorting, payment approval state machine transitions (`PENDING_APPROVAL` → `WAITING` + official token, rejection handling, role authorization), Apple HIG design tokens, and live Render backend receptionist API queries (including live unauthenticated auth guard verification).
+   - Total test assertions across all suites: 507/507 tests passing (100%).
 
 ---
 
@@ -66,8 +66,8 @@ Execute Phase 6 of the MediArca native mobile application for Google Play Store 
 - [x] Phase 3 Automated Suite: `npm run test:verify:phase3` passes 87/87 tests (100%).
 - [x] Phase 4 Automated Suite: `npm run test:verify:phase4` passes 87/87 tests (100%).
 - [x] Phase 5 Automated Suite: `npm run test:verify:phase5` passes 108/108 tests (100%).
-- [x] Phase 6 Automated Suite: `npm run test:verify:phase6` passes 92/92 tests (100%).
-- [x] All Tests Suite: `npm run test:verify:all` passes 499/499 assertions (100%).
+- [x] Phase 6 Automated Suite: `npm run test:verify:phase6` passes 100/100 tests (100%).
+- [x] All Tests Suite: `npm run test:verify:all` passes 507/507 assertions (100%).
 - [x] Multi-Doctor Live Desk Dashboard (`ActiveDoctorSwitcher`) with avatar, cabin presence dot, specialty, and waiting count verified.
 - [x] Multi-Doctor Overview Telemetry Card (`MultiDoctorOverviewCard`) with clinic metrics and quick action shortcuts verified.
 - [x] Desk Patient Queue Card (`DeskPatientCard`) with token `#X`, patient details, arrival badges (`Checked In` vs `Not Arrived`), and one-tap check-in toggle button verified.

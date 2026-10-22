@@ -61,14 +61,14 @@ In Indian outpatient clinics and polyclinics, the front desk reception team serv
 - Updates session credentials upon successful API response (`api.changeReceptionistPassword`).
 
 ### 6. Automated Verification Suite (`scripts/verify-phase6.ts`)
-- 92 comprehensive automated assertions verifying:
-  - Walk-in payload validation (+91 Indian phone, name bounds, age ranges, dependent fields).
+- 100 comprehensive automated assertions verifying:
+  - Walk-in payload validation (+91 Indian phone, name bounds, age ranges, dependent fields, alphabetical checks).
   - Temporary password change validation (min 8 characters, diversity rule, confirmation matching).
-  - Ticket QR payload parsing across JSON, URL query parameters, URL path UUIDs, and raw strings.
+  - Ticket QR payload parsing across JSON (including single-quoted JSON), URL query parameters (`appointmentId`, `ticketId`, `ticket_id`), URL path UUIDs, and raw strings.
   - Multi-doctor metrics aggregation and ascending sequential token sorting.
   - State machine transitions (`PENDING_APPROVAL` → `WAITING` with official tokens, rejection handling, role authorization).
   - Apple HIG design token compliance (44pt touch targets, `#0066cc` Action Blue, `#f5f5f7` canvas, 9999 pill borders).
-  - Live Render production backend health and receptionist API endpoints.
+  - Live Render production backend health, doctor catalog queries, and live unauthenticated receptionist auth guard verification.
 
 ---
 
@@ -78,4 +78,4 @@ In Indian outpatient clinics and polyclinics, the front desk reception team serv
 - Walk-in patients receive instant live token assignments with printable/shareable confirmation passes.
 - Offline and phone-less arrivals can be checked in with a single touch, preventing empty-cabin delays.
 - Temporary passwords are securely transitioned on first login, protecting sensitive patient health records.
-- 499/499 automated assertions across Phases 1 through 6 pass with 100% success and 0 TypeScript errors (`npm run typecheck`).
+- 507/507 automated assertions across Phases 1 through 6 pass with 100% success and 0 TypeScript errors (`npm run typecheck`).

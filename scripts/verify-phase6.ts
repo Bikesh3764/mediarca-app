@@ -76,6 +76,15 @@ async function runPhase6Verification() {
   assert(shortName.isValid === false, 'Rejects single-character name');
   assert(shortName.errors.patientName?.includes('2 characters') === true, 'Enforces minimum 2 character name');
 
+  // All-numeric Name
+  const numericName = validateWalkinPayload({
+    patientName: '123456',
+    patientPhone: '9876543210',
+    doctorId: 'doc_sarah_01',
+  });
+  assert(numericName.isValid === false, 'Rejects all-numeric patient name');
+  assert(numericName.errors.patientName?.includes('alphabetical') === true, 'Enforces alphabetical characters in patient name');
+
   // Missing Doctor
   const missingDoc = validateWalkinPayload({
     patientName: 'Pooja Patel',
@@ -205,12 +214,27 @@ async function runPhase6Verification() {
   const jsonTicketAlias = parseTicketQrPayload(JSON.stringify({ ticketId: 'appt_ticket_892' }));
   assert(jsonTicketAlias?.appointmentId === 'appt_ticket_892', 'Parses ticketId alias in JSON payload');
 
+  // Single-quoted JSON payload format
+  const singleQuoteJson = parseTicketQrPayload("{ 'appointmentId': '550e8400-e29b-41d4-a716-446655440000', 'doctorId': 'doc_2' }");
+  assert(singleQuoteJson?.appointmentId === '550e8400-e29b-41d4-a716-446655440000', 'Parses single-quoted JSON payload');
+  assert(singleQuoteJson?.doctorId === 'doc_2', 'Resolves doctorId from single-quoted JSON');
+
+  // Custom non-UUID ticketId in JSON
+  const customIdJson = parseTicketQrPayload("{ 'ticketId': 'ticket_12345' }");
+  assert(customIdJson?.appointmentId === 'ticket_12345', 'Parses custom non-UUID ticket ID in single-quoted JSON');
+
   // URL query parameter format
   const urlQueryQr = parseTicketQrPayload('https://mediarca-mdwk.onrender.com/pass?appointmentId=550e8400-e29b-41d4-a716-446655440000&code=XYZ');
   assert(urlQueryQr?.appointmentId === '550e8400-e29b-41d4-a716-446655440000', 'Extracts appointmentId from URL query parameters');
 
   const urlQueryIdAlias = parseTicketQrPayload('https://mediarca.app/appointment?id=appt_9918');
   assert(urlQueryIdAlias?.appointmentId === 'appt_9918', 'Extracts id query parameter from URL');
+
+  const urlTicketIdParam = parseTicketQrPayload('https://mediarca.app/pass?ticketId=ticket_12345');
+  assert(urlTicketIdParam?.appointmentId === 'ticket_12345', 'Extracts ticketId query parameter from URL');
+
+  const urlTicketUnderParam = parseTicketQrPayload('https://mediarca.app/pass?ticket_id=ticket_67890');
+  assert(urlTicketUnderParam?.appointmentId === 'ticket_67890', 'Extracts ticket_id query parameter from URL');
 
   // URL path UUID format
   const urlPathQr = parseTicketQrPayload('https://mediarca.app/passes/550e8400-e29b-41d4-a716-446655440000');
@@ -433,6 +457,19 @@ async function runPhase6Verification() {
     }
   } catch (err: any) {
     assert(false, 'api.getDoctors() query failed', err?.message);
+  }
+
+  // Live Unauthenticated Auth Guard Check
+  try {
+    const unauthRes = await fetch('https://mediarca-mdwk.onrender.com/api/receptionists/my-receptionist');
+    const unauthJson: any = await unauthRes.json();
+    assert(
+      unauthRes.status === 401 || unauthRes.status === 403,
+      'Live backend strictly blocks unauthenticated receptionist desk access',
+      `Status: ${unauthRes.status}, Message: ${unauthJson.message}`
+    );
+  } catch (err: any) {
+    assert(false, 'Live unauthenticated receptionist guard ping failed', err?.message);
   }
 
   // Verify receptionist API methods and aliases exist on api service

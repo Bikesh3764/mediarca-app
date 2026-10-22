@@ -27,16 +27,22 @@ export const WalkinConfirmationModal: React.FC<WalkinConfirmationModalProps> = (
 }) => {
   if (!appointment) return null;
 
-  const rawDoc = appointment.doctor?.user?.fullName || 'Practitioner';
+  const rawDoc =
+    appointment.doctor?.user?.fullName ||
+    (appointment.doctor as any)?.fullName ||
+    'Practitioner';
   const doctorName = rawDoc.startsWith('Dr.') ? rawDoc : `Dr. ${rawDoc}`;
   const patientName = appointment.patientName || appointment.patient?.user?.fullName || 'Walk-in Patient';
-  const phone = appointment.patient?.user?.phone || 'N/A';
-  const clinicName = appointment.clinic?.clinicName || 'Clinic Front Desk';
+  const phone = (appointment as any).patientPhone || appointment.patient?.user?.phone || 'N/A';
+  const clinicName = appointment.clinic?.clinicName || (appointment.clinic as any)?.name || 'Clinic Front Desk';
   const tokenStr = formatDisplayToken(appointment.queueNumber);
+  const appointmentDate = appointment.appointmentDate || 'Today';
+  const shiftName = appointment.checkingWindow || (appointment as any).slot?.name || 'OPD Shift';
+  const estTime = appointment.estimatedTime || 'Per live queue';
 
   const handleShare = async () => {
     try {
-      const message = `MediArca OPD Pass\nToken: ${tokenStr}\nPatient: ${patientName}\nDoctor: ${doctorName}\nClinic: ${clinicName}\nDate: ${appointment.appointmentDate}\nShift: ${appointment.checkingWindow || 'OPD Shift'}\nEst. Time: ${appointment.estimatedTime || 'Per live queue'}\n\nPlease arrive 10 minutes before your estimated time.`;
+      const message = `MediArca OPD Pass\nToken: ${tokenStr}\nPatient: ${patientName}\nDoctor: ${doctorName}\nClinic: ${clinicName}\nDate: ${appointmentDate}\nShift: ${shiftName}\nEst. Time: ${estTime}\n\nPlease arrive 10 minutes before your estimated time.`;
       await Share.share({
         message,
         title: `MediArca Token ${tokenStr}`,

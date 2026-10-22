@@ -74,16 +74,20 @@ export const DeskQrScannerModal: React.FC<DeskQrScannerModalProps> = ({
     setErrorMessage(null);
 
     try {
+      let appt: any = null;
       if (onScanSuccess) {
-        await onScanSuccess(appointmentId);
+        appt = await onScanSuccess(appointmentId);
       } else {
         const res = await api.checkInAppointmentDirect(appointmentId, true);
-        const appt = res?.data || res;
-        setSuccessInfo({
-          patientName: appt?.patientName || appt?.patient?.user?.fullName || 'Patient',
-          token: appt?.queueNumber,
-        });
+        appt = res?.data || res;
       }
+
+      const patientName = appt?.patientName || appt?.patient?.user?.fullName || 'Patient';
+      const token = appt?.queueNumber;
+      setSuccessInfo({
+        patientName,
+        token,
+      });
 
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 

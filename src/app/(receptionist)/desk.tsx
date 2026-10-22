@@ -47,10 +47,10 @@ export default function DeskScreen() {
   const mustChangePassword = Boolean(user?.mustChangePassword);
 
   // Load Desk Profile & Linked Doctors
-  const fetchDeskData = useCallback(async (isPullRefresh = false) => {
-    if (isPullRefresh) {
+  const fetchDeskData = useCallback(async (mode: 'initial' | 'refresh' | 'silent' = 'initial') => {
+    if (mode === 'refresh') {
       setIsRefreshing(true);
-    } else {
+    } else if (mode === 'initial') {
       setIsLoading(true);
     }
 
@@ -95,13 +95,25 @@ export default function DeskScreen() {
   }, []);
 
   useEffect(() => {
-    fetchDeskData();
+    fetchDeskData('initial');
   }, [fetchDeskData]);
 
   useEffect(() => {
     if (selectedDoctorId) {
       fetchDoctorQueue(selectedDoctorId);
     }
+  }, [selectedDoctorId, fetchDoctorQueue]);
+
+  // Periodic 15s live sync to keep front desk updated with doctor calls and incoming approvals
+  useEffect(() => {
+    if (!selectedDoctorId) return;
+    const interval = setInterval(() => {
+      fetchDoctorQueue(selectedDoctorId);
+      api.getPendingAppointments().then((pending) => {
+        setPendingApprovalsCount(Array.isArray(pending) ? pending.length : 0);
+      }).catch(() => {});
+    }, 15000);
+    return () => clearInterval(interval);
   }, [selectedDoctorId, fetchDoctorQueue]);
 
   // Handle Arrival Check-In Toggle
@@ -124,6 +136,7 @@ export default function DeskScreen() {
       if (selectedDoctorId) {
         fetchDoctorQueue(selectedDoctorId);
       }
+      fetchDeskData('silent');
     } catch (err: any) {
       Alert.alert('Check-In Error', err?.message || 'Failed to update arrival status.');
     } finally {
@@ -137,7 +150,7 @@ export default function DeskScreen() {
     <SafeAreaViewContainer
       scrollable
       refreshing={isRefreshing}
-      onRefresh={() => fetchDeskData(true)}
+      onRefresh={() => fetchDeskData('refresh')}
     >
       {/* 1. Header Row */}
       <View style={styles.header}>
@@ -311,8 +324,10 @@ export default function DeskScreen() {
           if (selectedDoctorId) fetchDoctorQueue(selectedDoctorId);
         }}
         onScanSuccess={async (appointmentId) => {
-          await api.checkInAppointmentDirect(appointmentId, true);
+          const res = await api.checkInAppointmentDirect(appointmentId, true);
           if (selectedDoctorId) fetchDoctorQueue(selectedDoctorId);
+          fetchDeskData('silent');
+          return res?.data || res;
         }}
       />
 

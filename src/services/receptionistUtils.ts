@@ -60,6 +60,8 @@ export const validateWalkinPayload = (payload: {
     errors.patientName = 'Patient full name is required';
   } else if (cleanName.length < 2) {
     errors.patientName = 'Name must be at least 2 characters';
+  } else if (!/[a-zA-Z]/.test(cleanName)) {
+    errors.patientName = 'Name must contain alphabetical characters';
   }
 
   const cleanPhone = (payload.patientPhone || '').trim();
@@ -151,13 +153,23 @@ export const parseTicketQrPayload = (raw?: string | null): ParsedTicketQr | null
   ) {
     try {
       const decoded = text.startsWith('%7B') ? decodeURIComponent(text) : text;
-      const parsed = JSON.parse(decoded);
+      let parsed: any;
+      try {
+        parsed = JSON.parse(decoded);
+      } catch {
+        // Fallback for single-quoted JSON or Python-style dict strings
+        const jsonNormalized = decoded.replace(/'/g, '"');
+        parsed = JSON.parse(jsonNormalized);
+      }
+
       const appointmentId = String(
         parsed.appointmentId ||
         parsed.appointment_id ||
+        parsed.appointmentid ||
         parsed.id ||
         parsed.ticketId ||
         parsed.ticket_id ||
+        parsed.ticketid ||
         ''
       ).trim();
 
@@ -184,20 +196,30 @@ export const parseTicketQrPayload = (raw?: string | null): ParsedTicketQr | null
       qs = qs.slice(0, qs.indexOf('#'));
     }
 
-    if (qs.includes('appointmentId') || qs.includes('appointment_id') || qs.includes('id=')) {
+    const lowerQs = qs.toLowerCase();
+    if (
+      lowerQs.includes('appointmentid') ||
+      lowerQs.includes('appointment_id') ||
+      lowerQs.includes('ticketid') ||
+      lowerQs.includes('ticket_id') ||
+      lowerQs.includes('id=') ||
+      lowerQs.startsWith('id=')
+    ) {
       const params = new URLSearchParams(qs);
-      const appointmentId = (
-        params.get('appointmentId') ||
-        params.get('appointment_id') ||
-        params.get('id') ||
-        ''
-      ).trim();
+      let appointmentId = '';
+      for (const key of ['appointmentId', 'appointment_id', 'appointmentid', 'ticketId', 'ticket_id', 'ticketid', 'id']) {
+        const val = params.get(key);
+        if (val && val.trim()) {
+          appointmentId = val.trim();
+          break;
+        }
+      }
 
       if (appointmentId) {
         return {
           appointmentId,
-          doctorId: params.get('doctorId') || undefined,
-          clinicId: params.get('clinicId') || undefined,
+          doctorId: params.get('doctorId') || params.get('doctor_id') || undefined,
+          clinicId: params.get('clinicId') || params.get('clinic_id') || undefined,
         };
       }
     }

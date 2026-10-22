@@ -162,8 +162,8 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 ## 9. Phase 6 Verification Record
 
 - **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
-- **Automated Verification Suite (`scripts/verify-phase6.ts`)**: 92/92 passed (100% pass rate).
-- **All Suites (`npm run test:verify:all`)**: 499/499 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), Phase 3 (87), Phase 4 (87), Phase 5 (108), and Phase 6 (92).
+- **Automated Verification Suite (`scripts/verify-phase6.ts`)**: 100/100 passed (100% pass rate).
+- **All Suites (`npm run test:verify:all`)**: 507/507 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), Phase 3 (87), Phase 4 (87), Phase 5 (108), and Phase 6 (100).
 - **Multi-Doctor Live Desk Dashboard (`src/app/(receptionist)/desk.tsx`, `/desk`)**:
   - Horizontal pill doctor carousel (`ActiveDoctorSwitcher.tsx`) displaying doctor avatar, cabin presence dot (`IN_CABIN`, `STEPPED_OUT`, `NOT_IN_CABIN`), doctor specialty, and active waiting patient count badge.
   - Multi-Doctor Telemetry Overview (`MultiDoctorOverviewCard.tsx`): Clinic header with 4-tile metric telemetry (active doctors, waiting queue, pending approvals, total bookings) and quick-action navigation buttons.

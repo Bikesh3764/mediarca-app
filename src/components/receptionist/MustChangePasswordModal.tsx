@@ -27,7 +27,7 @@ export const MustChangePasswordModal: React.FC<MustChangePasswordModalProps> = (
   visible,
   onSuccess,
 }) => {
-  const { updateUser, logout } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -51,8 +51,9 @@ export const MustChangePasswordModal: React.FC<MustChangePasswordModalProps> = (
         newPassword: newPassword.trim(),
       });
 
-      if (res?.user) {
-        await updateUser({ ...res.user, mustChangePassword: false });
+      const userToUpdate = res?.user || res?.data?.user || (user ? { ...user, mustChangePassword: false } : null);
+      if (userToUpdate) {
+        await updateUser({ ...userToUpdate, mustChangePassword: false });
       }
 
       Alert.alert(

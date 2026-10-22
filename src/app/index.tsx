@@ -266,6 +266,64 @@ export default function HomeScreen() {
         )}
       </View>
 
+      {/* Phase 3: Patient Discovery & Booking Action Card */}
+      <View style={styles.card}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.sectionTitle}>Doctor Discovery & Booking</Text>
+          <AppBadge variant="primary" label="Phase 3 Live" size="sm" />
+        </View>
+        <Text style={styles.sectionSubtitle}>
+          Search verified doctors, inspect real-time cabin presence, and book OPD queue tokens with Zero-Upfront Payment policy.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.signInPrimaryButton}
+          onPress={() => router.push('/explore')}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="search-outline" size={18} color={Colors.inkWhite} />
+          <Text style={styles.signInPrimaryText}>Find Doctors & Book Tokens</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Phase 3 Deliverables Checklist Card */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Phase 3 Deliverables</Text>
+        <Text style={styles.sectionSubtitle}>
+          Patient discovery, doctor profile, Apple HIG weekday discs, and step-by-step booking.
+        </Text>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Debounced Doctor Search (Name, Specialty, Clinic, City)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Horizontal Specialty Pill Carousel with 44pt Touch Targets</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>DoctorCard with Real-Time CabinBadge (In Cabin, Stepped Out)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Doctor Detail Screen with 7-Day Apple HIG WeekdayDisplay Discs</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Multi-Step Booking Flow (Clinic, IST Date, Shift, Patient Info)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Zero-Upfront Payment Policy & Estimated Token Confirmation</Text>
+        </View>
+      </View>
+
       {/* Phase 2 Verification Checklist Card */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Phase 2 Deliverables</Text>
@@ -310,7 +368,7 @@ export default function HomeScreen() {
         onPress={() => router.push('/explore')}
         activeOpacity={0.8}
       >
-        <Text style={styles.secondaryButtonText}>View Component Explorer</Text>
+        <Text style={styles.secondaryButtonText}>Open Doctor Discovery</Text>
         <Ionicons name="arrow-forward" size={16} color={Colors.primary} />
       </TouchableOpacity>
     </SafeAreaViewContainer>

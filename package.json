@@ -41,10 +41,11 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test:verify": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase2.ts",
+    "test:verify": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase3.ts",
     "test:verify:phase1": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase1.ts",
     "test:verify:phase2": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase2.ts",
-    "test:verify:all": "npm run test:verify:phase1 && npm run test:verify:phase2"
+    "test:verify:phase3": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase3.ts",
+    "test:verify:all": "npm run test:verify:phase1 && npm run test:verify:phase2 && npm run test:verify:phase3"
   },
   "private": true
 }

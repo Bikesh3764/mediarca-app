@@ -19,7 +19,7 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 | :---: | :--- | :---: | :---: |
 | **Phase 1** | **Scaffold, Design Tokens & Core Service Layer**: Expo SDK 58 setup, Apple HIG tokens (`constants/theme.ts`), API service layer (`services/api.ts`, `safeFetch.ts`), IST date math utilities, Safe Area Layout, Health Ping verification, Full Markdown Documentation & GitHub repo sync. | None | **COMPLETED** |
 | **Phase 2** | **Multi-Role Authentication & Secure Storage**: Hardware-backed `expo-secure-store`, multi-role login (Patient, Doctor, Receptionist, Clinic), `+91` phone validation, 6-digit email OTP screen with 60s countdown, reusable Apple HIG UI components, automated verification suite. | Phase 1 | **COMPLETED** |
-| **Phase 3** | **Patient Discovery, Doctor Profiles & Step Booking**: Debounced specialty search, live cabin presence badges, weekly practice discs (`M T W T F S S`), step-by-step booking sheet, zero-upfront fee disclosure. | Phase 2 | Queued |
+| **Phase 3** | **Patient Discovery, Doctor Profiles & Step Booking**: Debounced specialty search, live cabin presence badges, weekly practice discs (`M T W T F S S`), step-by-step booking sheet, zero-upfront fee disclosure. | Phase 2 | **COMPLETED** |
 | **Phase 4** | **Live Queue Pass, Receptionist Direct Dial & QR Check-In**: Live Queue Pass card, dynamic queue polling (10s/15s/60s), one-tap receptionist phone dialer (`Linking.openURL`), native 60fps camera QR scanner (`expo-camera`), haptic vibration (`expo-haptics`). | Phase 3 | Queued |
 | **Phase 5** | **Doctor Console, Live OPD Queue & Consultation Room**: Doctor live queue screen, sticky cabin presence toggle with return time modal, consultation room with vitals entry (BP, Pulse, Temp, Weight), shift and leave management. | Phase 4 | Queued |
 | **Phase 6** | **Receptionist Multi-Doctor Desk & Walk-In Dispenser**: Multi-doctor queue dashboard, online appointment approvals (`PENDING_APPROVAL` → `WAITING`), walk-in token dispenser form, counter ticket scanner. | Phase 5 | Queued |
@@ -85,7 +85,29 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 
 ---
 
-## 6. Complete Documentation Index
+## 6. Phase 3 Verification Record
+
+- **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
+- **Automated Verification Suite (`scripts/verify-phase3.ts`)**: 70/70 passed (100% pass rate).
+- **All Suites (`npm run test:verify:all`)**: 195/195 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), and Phase 3 (70).
+- **Patient Discovery & Doctor Search**:
+  - Implemented instant 250ms debounced search filtering by Doctor Name, Specialty, Clinic Name, and City.
+  - Built `SpecialtyPillCarousel.tsx` with 34 medical specialties and 44pt touch targets.
+  - Built `DoctorCard.tsx` with Cloudflare R2 photos, verified badges, degree cleaning, and real-time cabin badge.
+- **Doctor Detail Screen**:
+  - Built `src/app/doctors/[id].tsx` with comprehensive credentials, about bio, and affiliated clinics.
+  - Built `WeekdayDisplay.tsx` featuring Apple HIG circular 7-day letter discs (`M T W T F S S`), active today ring, and leave indicator.
+  - Shift cards displaying start/end timings (`format12Hour`), patient capacity limits, and average consultation minutes.
+  - Sticky bottom bar with consultation fee (`₹`) and 44pt pill "Book Token" button.
+- **Step-by-Step Booking Engine & Zero-Upfront Policy**:
+  - Built `src/app/book/[id].tsx` featuring 5-step progressive disclosure: Clinic selector, IST Date selector (with non-practice day guard), Shift selector with live slot capacity indicators (`Available`, `Ended`, `Full`), and Patient details (Self vs. Dependent with 0–125 age bounds).
+  - Enforced Zero-Upfront Payment Policy with explicit disclosure.
+  - Generates `PENDING_APPROVAL` appointment with `estimatedQueueNumber` via live backend `api.bookAppointment`.
+  - Confirmation screen with token pass, receptionist telephone dialer (`Linking.openURL(toTelUri)`), clinic venue, and instructions.
+
+---
+
+## 7. Complete Documentation Index
 
 - **Product Specification**: [MediArca_Feature_Specification.md](file:///./MediArca_Feature_Specification.md)
 - **Mobile Design System**: [MOBILE_DESIGN.md](file:///./MOBILE_DESIGN.md)
@@ -102,3 +124,4 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
   - [ADR 004: IST (Asia/Kolkata) Healthcare Date Standard](file:///./docs/decisions/004-ist-timezone-standard.md)
   - [ADR 005: Direct Connection to Live Render Backend](file:///./docs/decisions/005-direct-render-production-wiring.md)
   - [ADR 006: Hardware-Backed SecureStore Session Management](file:///./docs/decisions/006-secure-store-session-management.md)
+  - [ADR 007: Patient Discovery & Zero-Upfront Token Booking](file:///./docs/decisions/007-patient-discovery-and-zero-upfront-booking.md)

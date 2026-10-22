@@ -26,6 +26,10 @@ Module.prototype.require = function (id) {
       Keyboard: {
         dismiss: () => {},
       },
+      Linking: {
+        openURL: async () => {},
+        canOpenURL: async () => true,
+      },
     };
   }
 

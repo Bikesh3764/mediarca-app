@@ -20,6 +20,7 @@ export const Colors = {
 
   // Canvas & Surfaces
   canvas: '#ffffff',
+  canvasPure: '#ffffff',
   canvasParchment: '#f5f5f7',
   surfacePearl: '#fafafc',
   surfaceCard: '#ffffff',
@@ -99,11 +100,17 @@ export const Spacing = {
   seven: 32,
   eight: 40,
   nine: 48,
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
 } as const;
 
 export const BorderRadius = {
   xs: 4,
   sm: 8,
+  input: 10,
   md: 12,
   card: 16,
   lg: 20,
@@ -112,6 +119,18 @@ export const BorderRadius = {
 } as const;
 
 export const Typography = {
+  fontSize: {
+    hero: 32,
+    title1: 24,
+    title2: 20,
+    title3: 18,
+    headline: 17,
+    body: 16,
+    bodyBold: 16,
+    subheadline: 14,
+    footnote: 13,
+    caption: 12,
+  },
   hero: {
     fontSize: 32,
     fontWeight: '700' as const,
@@ -129,6 +148,12 @@ export const Typography = {
     fontWeight: '600' as const,
     letterSpacing: -0.2,
     lineHeight: 26,
+  },
+  title3: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    letterSpacing: -0.2,
+    lineHeight: 24,
   },
   headline: {
     fontSize: 17,

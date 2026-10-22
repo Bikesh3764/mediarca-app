@@ -1,4 +1,4 @@
-# Current Task: Phase 5 — Doctor Live OPD Queue, Consultation Room & Schedule Manager
+# Current Task: Phase 6 — Receptionist Clinical Desk, Multi-Doctor Live Switcher, Online Approvals & Walk-In Dispenser
 
 **Target Directory:** `c:\Users\Bikesh Ray\OneDrive\Desktop\MediArca-App`  
 **Reference Web App:** `c:\Users\Bikesh Ray\OneDrive\Desktop\MediArca`  
@@ -9,52 +9,52 @@
 
 ## 1. Objectives & Scope
 
-Execute Phase 5 of the MediArca native mobile application for the Google Play Store and iOS App Store:
+Execute Phase 6 of the MediArca native mobile application for Google Play Store and iOS App Store:
 
-1. **Doctor OPD Live Queue Screen (`src/app/(doctor)/queue.tsx` & `/doctor/queue`, `/queue`)**:
-   - **Sticky Real-Time Cabin Presence Switcher (`CabinPresenceSwitcher`)**:
-     - `IN_CABIN` (Green indicator: "In Cabin")
-     - `STEPPED_OUT` (Amber indicator: "Stepped Out", with quick return time selector sheet: 10m, 15m, 30m, 45m or custom time)
-     - `NOT_IN_CABIN` (Gray/Red indicator: "Not in Cabin")
-     - Real-time optimistic UI update with automatic state rollback on network failure calling `api.updateCabinPresence`.
-   - **Multi-Shift Switcher & Clinic Selector (`DoctorShiftSelector`)**:
-     - Filter queue by affiliated clinic facility and OPD shift (Morning OPD, Evening OPD) using `cleanSlotName`.
-   - **Queue Segmented View (`PatientQueueCard`)**:
-     - `Waiting`: Ordered strictly by token number ascending (`queueNumber`), with "Checked-In at Clinic" physical arrival indicator.
-     - `In Consultation`: Highlighting currently active patient in cabin.
-     - `Completed`: Archive of completed encounters.
-   - **Atomic Patient Queue Actions**:
-     - `Call to Cabin` (`api.callPatient`)
-     - `Hold / Step Out` (`api.holdConsultation`)
-     - `Open Consultation` (navigates to consultation room).
+1. **Multi-Doctor Live Desk Dashboard (`src/app/(receptionist)/desk.tsx` & `/desk`)**:
+   - **Active Doctor Switcher (`ActiveDoctorSwitcher`)**:
+     - Horizontal pill carousel displaying all actively practicing doctors in the clinic.
+     - Doctor avatar with real-time cabin presence dot (Green: `IN_CABIN`, Amber: `STEPPED_OUT`, Gray: `NOT_IN_CABIN`), doctor specialty, and active waiting count badge.
+     - Single-tap doctor selection highlighting the active practitioner in Action Blue (`#0066cc`).
+   - **Multi-Doctor Overview Telemetry Card (`MultiDoctorOverviewCard`)**:
+     - Clinic status grid: Total doctors, in-cabin count, total patients waiting across all clinic cabins, and total today bookings.
+     - Quick action shortcuts: `Scan QR`, `+ Walk-In`, and `Approvals Queue` with live pending count badge.
+   - **Desk Patient Card (`DeskPatientCard`)**:
+     - High-contrast sequential token badge (`#1`, `#2`, `#3`...).
+     - Patient full name, phone number (`formatIndianPhone`), age/gender, shift window, and estimated consultation time.
+     - Live physical arrival badges: `Checked In` (Green checkmark chip) vs `Not Arrived` (Amber clock chip).
+     - One-tap arrival toggle button calling `api.checkInAppointmentDirect` enabling instant counter check-in for patients without smartphones.
 
-2. **OPD Consultation Room Screen (`src/app/(doctor)/consultation/[id].tsx` & `/doctor/consultation/[id]`)**:
-   - **Patient Summary Card**: Name, Age, Gender, Phone (`formatIndianPhone`), Dependent patient banner, Chief Complaint / Symptoms, Token number.
-   - **Vitals Input Card (`VitalsCard`)**:
-     - Clinical bounds validation for Blood Pressure (Systolic 60-260 / Diastolic 40-160 mmHg, systolic > diastolic), Pulse (30-220 bpm), Body Temperature (90.0°F-110.0°F), and Weight (1.0-350.0 kg).
-     - Live validation feedback with error messaging and success checkmarks.
-   - **Clinical Diagnosis & Notes**: Assessment input and observations textarea.
-   - **One-Tap Complete & Finish Action**:
-     - Calls live backend `api.completeAppointment` (`completeConsultation`).
-     - Clear notice directing the patient to the front desk for physical prescription collection and checkout.
+2. **Online Payment & Approvals Queue (`src/app/(receptionist)/approvals.tsx` & `/approvals`)**:
+   - Real-time queue listing booking requests in `PENDING_APPROVAL` status with patient full name, 10-digit Indian phone, consultation fee, date, shift window, and estimated token number (`Est. #X`).
+   - Search filter by patient name, phone number, or doctor name.
+   - Direct action: `Approve Payment & Assign Token` calling `api.approveAppointment(id)`. Confirms counter cash or UPI payment, transitions ticket from `PENDING_APPROVAL` to `WAITING`, and locks in the official guaranteed sequential queue number.
+   - Decline action with clinical/operational reason dialog calling `api.rejectAppointment(id, reason)`.
 
-3. **Doctor Schedule & Leave Management Screen (`src/app/(doctor)/schedule.tsx` & `/doctor/schedule`)**:
-   - **Active Practice Days**: Apple HIG circular discs (`M T W T F S S`) with quick presets (`Weekdays`, `Mon-Sat`, `All 7`).
-   - **Shift Configuration**: Start/end timings, max patient capacity, and dynamic average consultation minutes calculation (`calculateAverageConsultationMinutes`) supporting overnight shifts.
-   - **Emergency "Take Leave Today" Toggle**: Real-time switch calling `api.addDoctorLeave(doctorId, { type: 'TODAY' })` to immediately halt new tokens.
-   - **Scheduled Absence Manager**: Date-range picker for future vacation dates (`isDoctorOnLeave`) and leave cancellation.
+3. **Rapid Walk-in Token Dispenser (`src/app/(receptionist)/walkin.tsx` & `/walkin`)**:
+   - Streamlined counter registration form: Patient full name, 10-digit Indian mobile number (+91 validation), practicing doctor selector, and shift slot selector.
+   - Family member / dependent booking toggle with age validation (0–125 years).
+   - Reason for visit / chief complaint input.
+   - Direct action: `Dispense Token` calling live `api.createWalkinAppointment` generating instant sequential live token number (`WAITING` + `queueNumber`).
+   - Instant token confirmation sheet (`WalkinConfirmationModal`) displaying large 44pt queue token number (`#X`), doctor name, clinic facility, shift window, and estimated consultation time with native SMS / WhatsApp sharing.
 
-4. **Doctor Profile & Clinic Affiliations Screen (`src/app/(doctor)/profile.tsx` & `/doctor/profile`)**:
-   - **Cloudflare R2 Avatar Photo Upload**: Integrated with `expo-image-picker` with compression quality (`quality: 0.8`) and direct multipart upload to `api.uploadAvatar`.
-   - **Clinic Affiliations Management**: Lists active affiliated clinics and handles incoming clinic requests with one-tap `Accept` and `Reject` actions (`api.respondToClinicAffiliation`).
+4. **Counter Desk Camera QR Scanner (`src/components/receptionist/DeskQrScannerModal.tsx`)**:
+   - Fast hardware camera scanner powered by `expo-camera` (`CameraView`) to scan arriving patients' mobile ticket QR codes directly at the counter.
+   - `parseTicketQrPayload` engine decoding JSON payloads, URL query parameters, URL path UUID segments, and raw UUID / `appt_` strings.
+   - Direct check-in integration via `api.checkInAppointmentDirect(appointmentId, true)` with tactile success haptic vibration (`Haptics.notificationAsync`) and manual ID search tab fallback.
 
-5. **Documentation & Architecture Decision Records**:
-   - Created ADR `docs/decisions/009-doctor-opd-console-and-consultation-workflow.md`.
+5. **Mandatory Temporary Password Guard (`MustChangePasswordModal`)**:
+   - Enforces `mustChangePassword` flow on first login for receptionist accounts created by clinic with a temporary password.
+   - Validates current password, minimum 8-character new password, password diversity check (`new !== current`), and confirmation matching.
+   - Calls `api.changeReceptionistPassword` and updates session credentials upon success.
+
+6. **Documentation & Architecture Decision Records**:
+   - Created ADR `docs/decisions/010-receptionist-desk-and-payment-approval-queue.md`.
    - Updated `PROJECT.md` and `docs/tasks/current-task.md`.
 
-6. **Automated Verification Suite**:
-   - Built `scripts/verify-phase5.ts` testing 108 assertions across BP bounds (systolic 60-260, diastolic 40-160, systolic > diastolic, unit suffixes), pulse ranges, temperature ranges, weight limits, expected return time math in IST UTC+05:30 across timezones, queue partitioning (including HOLD/CALLING/CONFIRMED), ascending token ordering, arrival check-in flags, shift consultation duration arithmetic, HIG weekday discs, historical TODAY leave isolation, timezone-safe Mon-Sat practice day calculations, and live Render backend doctor queries.
-   - Total test assertions across all suites: 407/407 tests passing (100%).
+7. **Automated Verification Suite (`scripts/verify-phase6.ts`)**:
+   - Built dedicated Phase 6 suite testing 92 assertions covering walk-in dispenser payload validation (+91 phone, name bounds, age, dependents), temporary password guards, counter QR ticket parser across all formats, multi-doctor aggregation metrics, ascending queue token sorting, payment approval state machine transitions (`PENDING_APPROVAL` → `WAITING` + official token, rejection handling, role authorization), Apple HIG design tokens, and live Render backend receptionist API queries.
+   - Total test assertions across all suites: 499/499 tests passing (100%).
 
 ---
 
@@ -66,16 +66,16 @@ Execute Phase 5 of the MediArca native mobile application for the Google Play St
 - [x] Phase 3 Automated Suite: `npm run test:verify:phase3` passes 87/87 tests (100%).
 - [x] Phase 4 Automated Suite: `npm run test:verify:phase4` passes 87/87 tests (100%).
 - [x] Phase 5 Automated Suite: `npm run test:verify:phase5` passes 108/108 tests (100%).
-- [x] All Tests Suite: `npm run test:verify:all` passes 407/407 assertions (100%).
-- [x] Sticky Header Cabin Presence Switcher with In Cabin, Stepped Out (with 10m/15m/30m/45m/custom modal), and Not in Cabin verified.
-- [x] Shift Switcher and Clinic Selector for multi-shift doctors verified.
-- [x] Queue segmented view (Waiting ordered by token number, In Cabin, Completed) verified.
-- [x] Patient actions: Call to Cabin, Hold, Open Consultation Room verified.
-- [x] OPD Consultation Room with Patient Summary, Vitals Card, Diagnosis, Notes, and one-tap finish consultation verified.
-- [x] Clinical bounds validation for BP (120/80), Pulse (30-220 bpm), Temp (90-110°F), and Weight (1-350 kg) verified.
-- [x] Physical prescription collection guidance banner at encounter finish verified.
-- [x] Doctor Schedule Manager with Apple HIG 7-day discs (M T W T F S S) verified.
-- [x] Emergency "Take Leave Today" toggle and scheduled absence date-range picker verified.
-- [x] Doctor Profile with Cloudflare R2 avatar photo upload and incoming clinic request Accept/Reject verified.
-- [x] Apple HIG 44pt touch targets and full pill buttons verified.
-- [x] Live Render backend doctor queries operational.
+- [x] Phase 6 Automated Suite: `npm run test:verify:phase6` passes 92/92 tests (100%).
+- [x] All Tests Suite: `npm run test:verify:all` passes 499/499 assertions (100%).
+- [x] Multi-Doctor Live Desk Dashboard (`ActiveDoctorSwitcher`) with avatar, cabin presence dot, specialty, and waiting count verified.
+- [x] Multi-Doctor Overview Telemetry Card (`MultiDoctorOverviewCard`) with clinic metrics and quick action shortcuts verified.
+- [x] Desk Patient Queue Card (`DeskPatientCard`) with token `#X`, patient details, arrival badges (`Checked In` vs `Not Arrived`), and one-tap check-in toggle button verified.
+- [x] Online Payment Approvals Queue (`approvals.tsx`) with fee display, search filter, and `Approve Payment & Assign Token` (`PENDING_APPROVAL` → `WAITING` + official sequential queue number) verified.
+- [x] Rejection flow with clinical reason dialog (`rejectAppointment`) verified.
+- [x] Rapid Walk-in Token Dispenser (`walkin.tsx`) with 10-digit Indian mobile validation (+91), doctor selector, shift selector, and `api.createWalkinAppointment` verified.
+- [x] Walk-in Token Confirmation Sheet (`WalkinConfirmationModal`) with large 44pt token `#X`, details table, and native sharing verified.
+- [x] Counter Desk Hardware Camera QR Scanner (`DeskQrScannerModal`) with `expo-camera`, laser animation, torch toggle, `parseTicketQrPayload`, and direct check-in verified.
+- [x] Mandatory Temporary Password Guard (`MustChangePasswordModal`) enforcing `mustChangePassword` flow verified.
+- [x] Apple HIG 44pt touch targets, full pill buttons (`borderRadius: 9999`), Action Blue (`#0066cc`), and Parchment canvas (`#f5f5f7`) verified.
+- [x] Live Render backend communication operational.

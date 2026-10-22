@@ -50,6 +50,21 @@ export {
 } from './queueUtils';
 export type { PollingIntervalConfig, PassDisplayData } from './queueUtils';
 
+export {
+  validateWalkinPayload,
+  validatePasswordChange,
+  parseTicketQrPayload,
+  calculateMultiDoctorMetrics,
+  sortReceptionistQueue,
+  formatDisplayCurrency,
+  formatDisplayToken,
+} from './receptionistUtils';
+export type {
+  WalkinValidationResult,
+  PasswordChangeValidationResult,
+  ParsedTicketQr,
+} from './receptionistUtils';
+
 const isDevFallback = Boolean(
   typeof __DEV__ !== 'undefined' && __DEV__ && process.env.EXPO_PUBLIC_ENABLE_DEMO_FALLBACK === 'true'
 );
@@ -2331,6 +2346,48 @@ export const api = {
   }): Promise<any> {
     const res = await safeFetch(`${API_BASE_URL}/receptionists/book-walkin`, {
       method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res);
+  },
+
+  async createWalkinAppointment(data: {
+    doctorId: string;
+    patientName: string;
+    patientPhone: string;
+    gender?: string;
+    patientAge?: string;
+    isForOther?: boolean;
+    appointmentDate?: string;
+    slotId?: string;
+    reasonForVisit?: string;
+    symptoms?: string;
+    clinicId?: string;
+  }): Promise<any> {
+    return this.bookWalkinAppointment(data);
+  },
+
+  async getReceptionistPendingAppointments(): Promise<Appointment[]> {
+    return this.getPendingAppointments();
+  },
+
+  async approveReceptionistAppointment(appointmentId: string): Promise<any> {
+    return this.approveAppointment(appointmentId);
+  },
+
+  async rejectReceptionistAppointment(appointmentId: string, reason?: string): Promise<any> {
+    return this.rejectAppointment(appointmentId, reason);
+  },
+
+  async updateReceptionistDoctorCabinStatus(data: {
+    doctorId: string;
+    clinicId?: string;
+    cabinStatus: string;
+    expectedReturnTime?: string | null;
+  }): Promise<any> {
+    const res = await safeFetch(`${API_BASE_URL}/receptionists/doctor-status`, {
+      method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });

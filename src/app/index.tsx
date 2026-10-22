@@ -266,6 +266,104 @@ export default function HomeScreen() {
         )}
       </View>
 
+      {/* Phase 6: Receptionist Clinical Desk & Online Approvals Action Card */}
+      <View style={styles.card}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.sectionTitle}>Receptionist Clinical Desk</Text>
+          <AppBadge variant="primary" label="Phase 6 Live" size="sm" />
+        </View>
+        <Text style={styles.sectionSubtitle}>
+          Multi-doctor live counter queue, one-tap arrival check-in, online payment approvals queue, walk-in token dispenser, and hardware camera QR scanner.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.signInPrimaryButton}
+          onPress={() => router.push('/(receptionist)/desk')}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="desktop-outline" size={18} color={Colors.inkWhite} />
+          <Text style={styles.signInPrimaryText}>Launch Clinical Desk Terminal</Text>
+        </TouchableOpacity>
+
+        <View style={styles.doctorSubNavRow}>
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/(receptionist)/approvals')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="card-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>Online Approvals</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/(receptionist)/walkin')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="person-add-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>Walk-In Dispenser</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Phase 6 Deliverables Checklist Card */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Phase 6 Deliverables</Text>
+        <Text style={styles.sectionSubtitle}>
+          Receptionist Live Desk, multi-doctor switching, payment verification queue, walk-in dispenser, and hardware QR ticket scanner.
+        </Text>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Multi-Doctor Live Desk Dashboard with Active Doctor Pill Carousel</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Multi-Doctor Queue Overview (Waiting Count, Serving Token, Active Cabin Status)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Live Arrival Check-In Badges (Checked In vs Not Arrived) & Timestamp Display</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>One-Tap Arrival Toggle for Offline Patients Arriving Without Smartphones</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Online Payment Approvals Queue (PENDING_APPROVAL → WAITING + Official Token)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Rejection Flow with Clinical Reason Dialog for Online Booking Requests</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Rapid Walk-in Token Dispenser with +91 Mobile Validation & Slot Selector</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Printable & Shareable Walk-in Token Confirmation Sheet</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Counter Desk Hardware Camera QR Scanner with expo-camera & Ticket Parsing</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Mandatory Temporary Password Guard Enforcing mustChangePassword Flow</Text>
+        </View>
+      </View>
+
       {/* Phase 5: Doctor OPD Console & Consultation Room Action Card */}
       <View style={styles.card}>
         <View style={styles.cardHeaderRow}>

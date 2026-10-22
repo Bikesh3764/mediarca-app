@@ -22,7 +22,7 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 | **Phase 3** | **Patient Discovery, Doctor Profiles & Step Booking**: Debounced specialty search, live cabin presence badges, weekly practice discs (`M T W T F S S`), step-by-step booking sheet, zero-upfront fee disclosure. | Phase 2 | **COMPLETED** |
 | **Phase 4** | **Live Queue Pass, Receptionist Direct Dial & QR Check-In**: Live Queue Pass card, dynamic queue polling (10s/15s/60s), one-tap receptionist phone dialer (`Linking.openURL`), native 60fps camera QR scanner (`expo-camera`), haptic vibration (`expo-haptics`). | Phase 3 | **COMPLETED** |
 | **Phase 5** | **Doctor Console, Live OPD Queue & Consultation Room**: Doctor live queue screen, sticky cabin presence toggle with return time modal, consultation room with vitals entry (BP, Pulse, Temp, Weight), shift and leave management. | Phase 4 | Queued |
-| **Phase 6** | **Receptionist Multi-Doctor Desk & Walk-In Dispenser**: Multi-doctor queue dashboard, online appointment approvals (`PENDING_APPROVAL` → `WAITING`), walk-in token dispenser form, counter ticket scanner. | Phase 5 | Queued |
+| **Phase 6** | **Receptionist Multi-Doctor Desk & Walk-In Dispenser**: Multi-doctor queue dashboard, online appointment approvals (`PENDING_APPROVAL` → `WAITING`), walk-in token dispenser form, counter ticket scanner. | Phase 5 | **COMPLETED** |
 | **Phase 7** | **Clinic/Admin Portals, Play Store Assets & EAS Build**: Clinic management, QR standee generator/export, legal compliance pages (Privacy Policy, Terms), self-serve account deletion, EAS cloud build configuration (`eas.json`), production `.aab` generation. | Phase 6 | Queued |
 
 ---
@@ -159,7 +159,36 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 
 ---
 
-## 9. Complete Documentation Index
+## 9. Phase 6 Verification Record
+
+- **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
+- **Automated Verification Suite (`scripts/verify-phase6.ts`)**: 92/92 passed (100% pass rate).
+- **All Suites (`npm run test:verify:all`)**: 499/499 assertions passed with 0 failures across Phase 1 (64), Phase 2 (61), Phase 3 (87), Phase 4 (87), Phase 5 (108), and Phase 6 (92).
+- **Multi-Doctor Live Desk Dashboard (`src/app/(receptionist)/desk.tsx`, `/desk`)**:
+  - Horizontal pill doctor carousel (`ActiveDoctorSwitcher.tsx`) displaying doctor avatar, cabin presence dot (`IN_CABIN`, `STEPPED_OUT`, `NOT_IN_CABIN`), doctor specialty, and active waiting patient count badge.
+  - Multi-Doctor Telemetry Overview (`MultiDoctorOverviewCard.tsx`): Clinic header with 4-tile metric telemetry (active doctors, waiting queue, pending approvals, total bookings) and quick-action navigation buttons.
+  - Desk Patient Queue Cards (`DeskPatientCard.tsx`): 44pt token badge `#X`, patient details, Indian phone formatter, live arrival badges (`Checked In` vs `Not Arrived`), direct telephone dialer (`Linking.openURL`), and one-tap physical arrival toggle (`api.checkInAppointmentDirect`) for phone-less arrivals.
+- **Online Payment & Approvals Queue (`src/app/(receptionist)/approvals.tsx`, `/approvals`)**:
+  - Lists online booking requests in `PENDING_APPROVAL` status with patient details, consultation fee in INR (`formatDisplayCurrency`), date, shift window, and estimated token number (`Est. #X`).
+  - Search filter by patient name, mobile number, or doctor name.
+  - One-tap `Approve Payment & Assign Token` calling `api.approveAppointment(id)`: atomically transitions ticket from `PENDING_APPROVAL` to `WAITING` and assigns official sequential queue number.
+  - `Reject / Decline` modal dialog capturing operational/clinical rejection justification before calling `api.rejectAppointment(id, reason)`.
+- **Rapid Walk-in Token Dispenser (`src/app/(receptionist)/walkin.tsx`, `/walkin`)**:
+  - Sub-30-second registration form for phone-less/counter patients.
+  - Validates 10-digit Indian mobile number (`validateWalkinPayload`), patient full name, age (0–125), gender, doctor selector, shift selector, and chief complaint.
+  - Direct token creation calling `api.createWalkinAppointment`: instantly generates `WAITING` status appointment with sequential token.
+  - Printable / Shareable Confirmation Modal (`WalkinConfirmationModal.tsx`): 44pt token badge `#X`, details grid, native sharing (`Share.share`), and one-tap reset for next patient.
+- **Counter Desk Hardware Camera QR Scanner (`src/components/receptionist/DeskQrScannerModal.tsx`)**:
+  - Hardware camera scanner using `expo-camera` (`CameraView`) with laser animation, torch toggle, and multi-format payload decoding (`parseTicketQrPayload`).
+  - Scans patient mobile ticket QR codes at the counter and triggers arrival verification with haptic feedback (`expo-haptics`).
+  - Manual appointment ID entry fallback with prevalidation.
+- **Temporary Password Guard (`src/components/receptionist/MustChangePasswordModal.tsx`)**:
+  - Mandatory password change modal enforcing `mustChangePassword` flow on first login for receptionist accounts (`api.changePasswordDirect`).
+  - Enforces minimum 8 characters, password confirmation matching, and prevents dismissal until password is updated.
+
+---
+
+## 10. Complete Documentation Index
 
 - **Product Specification**: [MediArca_Feature_Specification.md](file:///./MediArca_Feature_Specification.md)
 - **Mobile Design System**: [MOBILE_DESIGN.md](file:///./MOBILE_DESIGN.md)
@@ -179,4 +208,5 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
   - [ADR 007: Patient Discovery & Zero-Upfront Token Booking](file:///./docs/decisions/007-patient-discovery-and-zero-upfront-booking.md)
   - [ADR 008: Live Queue Ticket & Hardware Camera Check-In](file:///./docs/decisions/008-live-queue-ticket-and-hardware-camera-checkin.md)
   - [ADR 009: Doctor OPD Live Queue Console & Consultation Workflow](file:///./docs/decisions/009-doctor-opd-console-and-consultation-workflow.md)
+  - [ADR 010: Receptionist Clinical Desk & Online Approvals Queue](file:///./docs/decisions/010-receptionist-desk-and-payment-approval-queue.md)
 

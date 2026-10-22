@@ -50,7 +50,8 @@
     "test:verify:phase3": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase3.ts",
     "test:verify:phase4": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase4.ts",
     "test:verify:phase5": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase5.ts",
-    "test:verify:all": "npm run test:verify:phase1 && npm run test:verify:phase2 && npm run test:verify:phase3 && npm run test:verify:phase4 && npm run test:verify:phase5"
+    "test:verify:phase6": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase6.ts",
+    "test:verify:all": "npm run test:verify:phase1 && npm run test:verify:phase2 && npm run test:verify:phase3 && npm run test:verify:phase4 && npm run test:verify:phase5 && npm run test:verify:phase6"
   },
   "private": true
 }

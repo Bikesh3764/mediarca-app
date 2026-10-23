@@ -20,6 +20,7 @@ import {
   validateAccountDeletionConfirmation,
   getRegulatoryRetentionDisclosure,
 } from '@/services/adminClinicUtils';
+import { isValidIndianPhone, formatIndianPhone } from '@/utils/phoneUtils';
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 const GENDERS = ['Male', 'Female', 'Other'];
@@ -74,8 +75,7 @@ export default function PatientProfileScreen() {
     }
 
     if (phone.trim()) {
-      const cleanDigits = phone.replace(/\D/g, '');
-      if (cleanDigits.length !== 10 || !/^[6-9]/.test(cleanDigits)) {
+      if (!isValidIndianPhone(phone.trim())) {
         setErrorMessage('Please enter a valid 10-digit Indian mobile number starting with 6-9.');
         return;
       }
@@ -83,7 +83,7 @@ export default function PatientProfileScreen() {
 
     setIsSaving(true);
     try {
-      const formattedPhone = phone.trim() ? `+91 ${phone.trim()}` : undefined;
+      const formattedPhone = phone.trim() ? formatIndianPhone(phone.trim()) : undefined;
       const updatedUser = await api.updateUserProfile({
         fullName: fullName.trim(),
         phone: formattedPhone,

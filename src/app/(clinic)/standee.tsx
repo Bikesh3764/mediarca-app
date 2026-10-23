@@ -15,6 +15,7 @@ import { SafeAreaViewContainer } from '@/components/common/SafeAreaViewContainer
 import { Colors, Spacing, BorderRadius, Typography, TouchTarget, Shadows } from '@/constants/theme';
 import { api, ClinicProfile } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
+import { createStandeeQrPayload } from '@/services/adminClinicUtils';
 
 const DEMO_STAND_CLINIC: ClinicProfile = {
   id: 'clinic_demo_1',
@@ -57,10 +58,10 @@ export default function ClinicStandeeScreen() {
   const checkinCode = clinic?.checkinCode || 'MEDI';
 
   // Standardized MediArca checkin payload
-  const checkinPayload = JSON.stringify({
-    clinicId,
+  const checkinPayload = createStandeeQrPayload({
+    id: clinicId,
     clinicName,
-    code: checkinCode,
+    checkinCode,
   });
 
   const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(checkinPayload)}`;

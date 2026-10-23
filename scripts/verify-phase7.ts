@@ -27,6 +27,7 @@ import {
   filterDoctorsByStatus,
   filterClinicsByStatus,
   filterMessagesByStatus,
+  createStandeeQrPayload,
 } from '../src/services/adminClinicUtils';
 
 import {
@@ -34,6 +35,7 @@ import {
   Doctor,
   ClinicProfile,
   ContactMessageItem,
+  parseQrPayload,
 } from '../src/services/api';
 
 import { Colors, TouchTarget, BorderRadius, Typography } from '../src/constants/theme';
@@ -201,6 +203,17 @@ async function runPhase7Verification() {
   const searchedByName = filterDoctorsByStatus(sampleDoctors, 'ALL', 'Arjun');
   assert(searchedByName.length === 1, 'Searches doctor by name substring');
 
+  const topLevelNameDocs: any[] = [
+    {
+      id: 'doc_5',
+      fullName: 'Dr. Vivek Murthy',
+      specialty: 'Internal Medicine',
+      verificationStatus: 'VERIFIED',
+    },
+  ];
+  const matchedTopLevel = filterDoctorsByStatus(topLevelNameDocs, 'ALL', 'Vivek');
+  assert(matchedTopLevel.length === 1, 'Searches doctor by top-level fullName resiliently');
+
   // ----------------------------------------------------
   // 3. Admin Clinic Establishment License State Machine
   // ----------------------------------------------------
@@ -303,6 +316,33 @@ async function runPhase7Verification() {
   });
   assert(shortMessageContact.isValid === false, 'Rejects message under 10 characters');
 
+  const plus91Contact = validateContactMessage({
+    fullName: 'Rohan Deshmukh',
+    email: 'rohan.d@gmail.com',
+    phone: '+91 98200 12345',
+    subject: 'OPD Queue Help',
+    message: 'Checking shift schedule for cardiology doctor.',
+  });
+  assert(plus91Contact.isValid === true, 'Accepts +91 prefixed phone number');
+
+  const zeroPrefixedContact = validateContactMessage({
+    fullName: 'Rohan Deshmukh',
+    email: 'rohan.d@gmail.com',
+    phone: '09820012345',
+    subject: 'OPD Queue Help',
+    message: 'Checking shift schedule for cardiology doctor.',
+  });
+  assert(zeroPrefixedContact.isValid === true, 'Accepts trunk 0-prefixed Indian phone number');
+
+  const whitespacePhoneContact = validateContactMessage({
+    fullName: 'Rohan Deshmukh',
+    email: 'rohan.d@gmail.com',
+    phone: '   ',
+    subject: 'OPD Queue Help',
+    message: 'Checking shift schedule for cardiology doctor.',
+  });
+  assert(whitespacePhoneContact.isValid === true, 'Treats whitespace phone as optional omitted field');
+
   // Support Inquiries Filter
   const sampleMessages: ContactMessageItem[] = [
     {
@@ -368,15 +408,16 @@ async function runPhase7Verification() {
   });
   assert(shortPasswordReceptionist.isValid === false, 'Rejects receptionist password < 8 characters');
 
-  // Standee QR Payload format
-  const standeePayload = JSON.stringify({
-    clinicId: 'clinic_apollo_01',
+  // Standee QR Payload format & Queue Scanner Parser integration
+  const generatedStandeePayload = createStandeeQrPayload({
+    id: 'clinic_apollo_01',
     clinicName: 'Apollo City Clinic',
-    code: 'APOLLO',
+    checkinCode: 'APOLLO',
   });
-  const parsedStandee = JSON.parse(standeePayload);
-  assert(parsedStandee.clinicId === 'clinic_apollo_01', 'Standee QR payload contains clinicId');
-  assert(parsedStandee.code === 'APOLLO', 'Standee QR payload contains counter checkin code');
+  const parsedFromScanner = parseQrPayload(generatedStandeePayload);
+  assert(parsedFromScanner !== null, 'parseQrPayload successfully decodes generated standee QR');
+  assert(parsedFromScanner?.clinicId === 'clinic_apollo_01', 'Decoded standee clinicId matches clinic_apollo_01');
+  assert(parsedFromScanner?.code === 'APOLLO', 'Decoded standee code matches APOLLO');
 
   // ----------------------------------------------------
   // 6. Google Play Compliance: Self-Serve Account Deletion
@@ -394,6 +435,12 @@ async function runPhase7Verification() {
 
   const randomConfirm = validateAccountDeletionConfirmation('CANCEL');
   assert(randomConfirm.isValid === false, 'Rejects mismatched confirmation keyword');
+
+  const nullConfirm = validateAccountDeletionConfirmation(null as any);
+  assert(nullConfirm.isValid === false, 'Safely handles null confirmation input without error');
+
+  const numConfirm = validateAccountDeletionConfirmation(12345 as any);
+  assert(numConfirm.isValid === false, 'Safely handles non-string confirmation input');
 
   // Statutory retention notice check
   const retentionDisclosure = getRegulatoryRetentionDisclosure();

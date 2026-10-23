@@ -29,6 +29,7 @@ import {
   validateClinicProfile,
   validateReceptionistCreation,
 } from '@/services/adminClinicUtils';
+import { formatIndianPhone } from '@/utils/phoneUtils';
 
 const DEMO_CLINIC_PROFILE: ClinicProfile = {
   id: 'clinic_demo_1',
@@ -301,7 +302,7 @@ export default function ClinicManagementScreen() {
         fullName: staffName.trim(),
         email: staffEmail.trim(),
         password: staffPassword,
-        phone: staffPhone.trim() ? `+91 ${staffPhone.trim()}` : undefined,
+        phone: staffPhone.trim() ? formatIndianPhone(staffPhone.trim()) : undefined,
       });
       setShowAddStaffModal(false);
       setStaffName('');

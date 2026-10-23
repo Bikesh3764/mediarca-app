@@ -15,6 +15,7 @@ import { Colors, Spacing, BorderRadius, Typography, TouchTarget, Shadows } from 
 import { api } from '@/services/api';
 import { validateContactMessage } from '@/services/adminClinicUtils';
 import { useAuth } from '@/context/AuthContext';
+import { formatIndianPhone } from '@/utils/phoneUtils';
 
 export default function ContactUsScreen() {
   const router = useRouter();
@@ -33,10 +34,13 @@ export default function ContactUsScreen() {
 
   const handleSubmit = async () => {
     setServerError(null);
+    const trimmedPhone = phone ? phone.trim() : '';
+    const formattedPhone = trimmedPhone ? formatIndianPhone(trimmedPhone) : undefined;
+
     const validation = validateContactMessage({
       fullName,
       email,
-      phone: phone ? `+91 ${phone}` : undefined,
+      phone: formattedPhone,
       subject,
       message,
     });
@@ -52,7 +56,7 @@ export default function ContactUsScreen() {
       await api.sendContactMessage({
         fullName: fullName.trim(),
         email: email.trim(),
-        phone: phone ? `+91 ${phone.trim()}` : undefined,
+        phone: formattedPhone,
         subject: subject.trim(),
         message: message.trim(),
       });

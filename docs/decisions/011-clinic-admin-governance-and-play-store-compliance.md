@@ -55,7 +55,7 @@ Phase 7 concludes the core release engineering for MediArca Mobile, delivering t
   - `src/app/legal/contact.tsx`: Feedback form validating inputs via `validateContactMessage` and submitting to `api.sendContactMessage`.
 
 ## Verification Metrics
-- 89 automated assertions passing in `scripts/verify-phase7.ts`.
-- 596 total assertions passing across Phases 1 through 7 in `npm run test:verify:all`.
+- 96 automated assertions passing in `scripts/verify-phase7.ts`.
+- 590 total assertions passing across Phases 1 through 7 in `npm run test:verify:all`.
 - 0 TypeScript compiler errors under `npm run typecheck`.
 - 43 static web routes successfully exported to `dist/` with Expo Metro Router.

@@ -9,6 +9,7 @@
  */
 
 import { Doctor, ClinicProfile, ContactMessageItem } from './api';
+import { isValidIndianPhone, formatIndianPhone, sanitizeIndianPhone } from '../utils/phoneUtils';
 
 export interface ContactMessagePayload {
   fullName: string;
@@ -21,6 +22,21 @@ export interface ContactMessagePayload {
 export interface ValidationResult {
   isValid: boolean;
   errors: Record<string, string>;
+}
+
+/**
+ * Creates standardized JSON payload for clinic counter QR standees.
+ */
+export function createStandeeQrPayload(clinic: {
+  id: string;
+  clinicName: string;
+  checkinCode?: string;
+}): string {
+  return JSON.stringify({
+    clinicId: clinic.id,
+    clinicName: clinic.clinicName,
+    code: clinic.checkinCode || 'MEDI',
+  });
 }
 
 /**
@@ -43,9 +59,7 @@ export function validateContactMessage(payload: ContactMessagePayload): Validati
   }
 
   if (payload.phone && payload.phone.trim()) {
-    const digits = payload.phone.replace(/\D/g, '');
-    const local10 = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
-    if (local10.length !== 10 || !/^[6-9]/.test(local10)) {
+    if (!isValidIndianPhone(payload.phone.trim())) {
       errors.phone = 'Please enter a valid 10-digit Indian mobile number starting with 6-9.';
     }
   }
@@ -85,9 +99,7 @@ export function validateClinicProfile(data: {
   }
 
   if (data.phone && data.phone.trim()) {
-    const digits = data.phone.replace(/\D/g, '');
-    const local10 = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
-    if (local10.length !== 10 || !/^[6-9]/.test(local10)) {
+    if (!isValidIndianPhone(data.phone.trim())) {
       errors.phone = 'Please enter a valid 10-digit Indian phone number.';
     }
   }
@@ -136,9 +148,7 @@ export function validateReceptionistCreation(data: {
   }
 
   if (data.phone && data.phone.trim()) {
-    const digits = data.phone.replace(/\D/g, '');
-    const local10 = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
-    if (local10.length !== 10 || !/^[6-9]/.test(local10)) {
+    if (!isValidIndianPhone(data.phone.trim())) {
       errors.phone = 'Phone number must be a valid 10-digit Indian number.';
     }
   }
@@ -156,7 +166,7 @@ export function validateAccountDeletionConfirmation(confirmationInput: string): 
   isValid: boolean;
   error?: string;
 } {
-  const clean = (confirmationInput || '').trim();
+  const clean = typeof confirmationInput === 'string' ? confirmationInput.trim() : '';
   if (clean !== 'DELETE') {
     return {
       isValid: false,
@@ -214,6 +224,7 @@ export function filterDoctorsByStatus(
     list = list.filter(
       (doc) =>
         (doc.user?.fullName && doc.user.fullName.toLowerCase().includes(q)) ||
+        (Boolean((doc as any).fullName) && String((doc as any).fullName).toLowerCase().includes(q)) ||
         (doc.specialty && doc.specialty.toLowerCase().includes(q)) ||
         (doc.qualifications && doc.qualifications.toLowerCase().includes(q)) ||
         (doc.user?.email && doc.user.email.toLowerCase().includes(q))

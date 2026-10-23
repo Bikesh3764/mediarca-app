@@ -266,6 +266,189 @@ export default function HomeScreen() {
         )}
       </View>
 
+      {/* Phase 7: Clinic Management & QR Standee Action Card */}
+      <View style={styles.card}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.sectionTitle}>Clinic Management Portal</Text>
+          <AppBadge variant="primary" label="Phase 7 Live" size="sm" />
+        </View>
+        <Text style={styles.sectionSubtitle}>
+          Facility profile and photo upload, doctor roster approvals, desk receptionist accounts, and high-res counter QR standees.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.signInPrimaryButton}
+          onPress={() => router.push('/(clinic)')}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="business-outline" size={18} color={Colors.inkWhite} />
+          <Text style={styles.signInPrimaryText}>Launch Clinic Management Portal</Text>
+        </TouchableOpacity>
+
+        <View style={styles.doctorSubNavRow}>
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/(clinic)/standee')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="qr-code-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>Counter QR Standee</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/(patient)/profile')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="person-circle-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>Patient Profile</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Phase 7: Admin Governance Console Card */}
+      <View style={styles.card}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.sectionTitle}>Admin Governance Console</Text>
+          <AppBadge variant="primary" label="Phase 7 Live" size="sm" />
+        </View>
+        <Text style={styles.sectionSubtitle}>
+          Doctor medical council licensure verification queue, clinic establishment licenses, and user support contact inquiries.
+        </Text>
+
+        <TouchableOpacity
+          style={styles.signInPrimaryButton}
+          onPress={() => router.push('/(admin)')}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="shield-checkmark-outline" size={18} color={Colors.inkWhite} />
+          <Text style={styles.signInPrimaryText}>Launch Admin Governance Console</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Phase 7: Legal & Play Store Compliance Hub */}
+      <View style={styles.card}>
+        <View style={styles.cardHeaderRow}>
+          <Text style={styles.sectionTitle}>Legal & Compliance Hub</Text>
+          <AppBadge variant="primary" label="Play Store Ready" size="sm" />
+        </View>
+        <Text style={styles.sectionSubtitle}>
+          Mandatory statutory legal policies, zero upfront payment disclosures, and Google Play compliant self-serve account deletion.
+        </Text>
+
+        <View style={styles.doctorSubNavRow}>
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/legal/terms')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="document-text-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>Terms of Service</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/legal/privacy')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="lock-closed-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>Privacy Policy</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={[styles.doctorSubNavRow, { marginTop: Spacing.sm }]}>
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/legal/refund')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="receipt-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>Refund Policy</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/legal/about')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="information-circle-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>About Us</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.doctorSubNavBtn}
+            onPress={() => router.push('/legal/contact')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="mail-outline" size={16} color={Colors.primary} />
+            <Text style={styles.doctorSubNavText}>Contact Us</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Phase 7 Deliverables Checklist Card */}
+      <View style={styles.card}>
+        <Text style={styles.sectionTitle}>Phase 7 Deliverables</Text>
+        <Text style={styles.sectionSubtitle}>
+          Clinic portal, doctor licensure verification, contact inquiries, legal policies, standalone APK EAS build, and web support.
+        </Text>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Free Standalone APK Build Configuration in eas.json (No $25 Play Store Required)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Full Web Browser Support on localhost:8081 via react-native-web & @expo/metro-runtime</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Clinic Facility Management Portal (Profile, Photo Upload, Check-in Code)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Doctor Roster Management (Add Doctor, Approve/Reject Affiliation Requests)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Desk Receptionist Provisioning & Staff Account Deactivation</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Clinic Counter QR Standee Screen with High-Res QR & Share/Print Capability</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Admin Doctor Medical Council Licensure Verification Queue (VERIFIED / REJECTED / SUSPENDED)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Admin Clinic Establishment License Verification Queue</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Platform Support Messages & Inquiries Management (Mark Read, Delete)</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>In-App Self-Serve Account Deletion with Google Play & NMC Statutory Disclosures</Text>
+        </View>
+
+        <View style={styles.checklistRow}>
+          <Ionicons name="checkmark-circle" size={20} color={Colors.success} />
+          <Text style={styles.checklistText}>Statutory Legal Compliance Suite (Terms, Privacy, Refund, About, Contact)</Text>
+        </View>
+      </View>
+
       {/* Phase 6: Receptionist Clinical Desk & Online Approvals Action Card */}
       <View style={styles.card}>
         <View style={styles.cardHeaderRow}>

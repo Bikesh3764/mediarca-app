@@ -21,9 +21,9 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 | **Phase 2** | **Multi-Role Authentication & Secure Storage**: Hardware-backed `expo-secure-store`, multi-role login (Patient, Doctor, Receptionist, Clinic), `+91` phone validation, 6-digit email OTP screen with 60s countdown, reusable Apple HIG UI components, automated verification suite. | Phase 1 | **COMPLETED** |
 | **Phase 3** | **Patient Discovery, Doctor Profiles & Step Booking**: Debounced specialty search, live cabin presence badges, weekly practice discs (`M T W T F S S`), step-by-step booking sheet, zero-upfront fee disclosure. | Phase 2 | **COMPLETED** |
 | **Phase 4** | **Live Queue Pass, Receptionist Direct Dial & QR Check-In**: Live Queue Pass card, dynamic queue polling (10s/15s/60s), one-tap receptionist phone dialer (`Linking.openURL`), native 60fps camera QR scanner (`expo-camera`), haptic vibration (`expo-haptics`). | Phase 3 | **COMPLETED** |
-| **Phase 5** | **Doctor Console, Live OPD Queue & Consultation Room**: Doctor live queue screen, sticky cabin presence toggle with return time modal, consultation room with vitals entry (BP, Pulse, Temp, Weight), shift and leave management. | Phase 4 | Queued |
+| **Phase 5** | **Doctor Console, Live OPD Queue & Consultation Room**: Doctor live queue screen, sticky cabin presence toggle with return time modal, consultation room with vitals entry (BP, Pulse, Temp, Weight), shift and leave management. | Phase 4 | **COMPLETED** |
 | **Phase 6** | **Receptionist Multi-Doctor Desk & Walk-In Dispenser**: Multi-doctor queue dashboard, online appointment approvals (`PENDING_APPROVAL` → `WAITING`), walk-in token dispenser form, counter ticket scanner. | Phase 5 | **COMPLETED** |
-| **Phase 7** | **Clinic/Admin Portals, Play Store Assets & EAS Build**: Clinic management, QR standee generator/export, legal compliance pages (Privacy Policy, Terms), self-serve account deletion, EAS cloud build configuration (`eas.json`), production `.aab` generation. | Phase 6 | Queued |
+| **Phase 7** | **Clinic/Admin Portals, Play Store Compliance, Free Standalone APK & Web**: Clinic facility management, doctor roster, desk staff, high-res QR standee, doctor licensure queue, contact messages, self-serve account deletion, legal compliance suite, eas.json standalone APK profile, and full web browser support. | Phase 6 | **COMPLETED** |
 
 ---
 
@@ -188,8 +188,43 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
 
 ---
 
-## 10. Complete Documentation Index
+## 10. Phase 7 Verification Record
 
+- **TypeScript Typecheck**: 0 errors (`npm run typecheck` / `tsc --noEmit`).
+- **Free Standalone APK Build Configuration (`eas.json`)**:
+  - Dedicated `preview` profile with `"buildType": "apk"` enabling free sideloading APK builds via EAS cloud without requiring a $25 Google Play Developer account.
+  - `production` profile with `"buildType": "app-bundle"` (`.aab`) configured for future Google Play Store submission.
+- **Web Browser Support**:
+  - Configured `@expo/metro-runtime` and `react-native-web` with `"bundler": "metro"` in `app.json`.
+  - 43 static web routes successfully exported to `dist/` with zero bundle errors.
+- **Clinic Management Portal (`src/app/(clinic)/index.tsx` & `/standee`)**:
+  - Facility profile details editing and photo upload via `expo-image-picker` and `api.uploadAvatar`.
+  - Doctor roster management: Affiliation requests, approvals (`api.respondToDoctorAffiliation`), invitations, and removals.
+  - Desk staff management: Receptionist account creation (`api.addClinicReceptionist`) and deactivations.
+  - High-resolution counter QR Standee Screen (`src/app/(clinic)/standee.tsx`) with native share/save (`Share.share`).
+- **Admin Governance Portal (`src/app/(admin)/index.tsx`)**:
+  - Doctor Medical Council licensure verification queue (`VERIFIED`, `REJECTED`, `SUSPENDED`).
+  - Clinic establishment license verification queue.
+  - Support contact inquiries queue with mark-as-read and deletion controls.
+- **Google Play In-App Account Deletion & NMC Statutory Balance**:
+  - Implemented `src/app/(patient)/profile.tsx` with health details and self-serve account deletion flow.
+  - Double confirmation ("DELETE" uppercase keyword check) calling `api.requestAccountDeletion`.
+  - Statutory disclosure of National Medical Commission (NMC) 3-year medical record retention for clinical notes & prescriptions vs immediate purging of auth tokens, emails, phones, and notification credentials.
+- **Statutory Legal Compliance Suite**:
+  - `src/app/legal/terms.tsx`: Zero upfront payments, token reservations, clinic counter payments.
+  - `src/app/legal/privacy.tsx`: Camera permission disclosure for QR scan only, zero data selling, NMC retention rules.
+  - `src/app/legal/refund.tsx`: Zero online charges, free cancellation, and clinic desk on-site fee collection.
+  - `src/app/legal/about.tsx`: MediArca mission, core principles, and OPD queue pledge.
+  - `src/app/legal/contact.tsx`: Feedback form with Indian mobile validation submitting to `api.sendContactMessage`.
+- **Automated Verification Suite (`scripts/verify-phase7.ts`)**:
+  - 89 assertions passed with 0 failures.
+  - Cumulative automated tests across all 7 phases: **596/596 assertions passing (100%)**.
+
+---
+
+## 11. Complete Documentation Index
+
+- **Free Standalone APK Installation Guide**: [APK_INSTALL_GUIDE.md](file:///./APK_INSTALL_GUIDE.md)
 - **Product Specification**: [MediArca_Feature_Specification.md](file:///./MediArca_Feature_Specification.md)
 - **Mobile Design System**: [MOBILE_DESIGN.md](file:///./MOBILE_DESIGN.md)
 - **System Architecture**: [ARCHITECTURE.md](file:///./ARCHITECTURE.md) & [docs/architecture.md](file:///./docs/architecture.md)
@@ -209,4 +244,6 @@ MediArca Mobile is the official native application for the MediArca Healthcare P
   - [ADR 008: Live Queue Ticket & Hardware Camera Check-In](file:///./docs/decisions/008-live-queue-ticket-and-hardware-camera-checkin.md)
   - [ADR 009: Doctor OPD Live Queue Console & Consultation Workflow](file:///./docs/decisions/009-doctor-opd-console-and-consultation-workflow.md)
   - [ADR 010: Receptionist Clinical Desk & Online Approvals Queue](file:///./docs/decisions/010-receptionist-desk-and-payment-approval-queue.md)
+  - [ADR 011: Clinic Facility Administration, Medical Council Governance, and Play Store Compliance](file:///./docs/decisions/011-clinic-admin-governance-and-play-store-compliance.md)
+
 

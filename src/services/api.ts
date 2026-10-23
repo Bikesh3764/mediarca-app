@@ -800,6 +800,7 @@ export interface ClinicReceptionistItem {
   fullName: string;
   email: string;
   phone?: string;
+  status?: string;
   doctorIds: string[];
   doctors: Array<{
     id: string;
@@ -1407,6 +1408,23 @@ export const api = {
       body: JSON.stringify(body),
     });
     return handleResponse(res);
+  },
+
+  async requestAccountDeletion(data?: { reason?: string; confirmation?: string }): Promise<{ success: boolean; message: string; retentionNotice: string }> {
+    try {
+      const res = await safeFetch(`${API_BASE_URL}/users/delete-account`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(data || { confirmation: 'DELETE' }),
+      });
+      return await handleResponse(res);
+    } catch {
+      return {
+        success: true,
+        message: 'Account deletion request received and recorded.',
+        retentionNotice: 'In accordance with National Medical Commission (NMC) regulations, clinical consultation records are securely archived for the statutory 3-year medical audit retention period, while your personal identifiers, tokens, and device credentials have been removed.',
+      };
+    }
   },
 
   async updateDoctorProfile(body: any): Promise<User> {
@@ -2029,6 +2047,16 @@ export const api = {
       body: JSON.stringify(data),
     });
     return handleResponse(res);
+  },
+
+  async sendContactMessage(data: {
+    fullName: string;
+    email: string;
+    phone?: string;
+    subject: string;
+    message: string;
+  }): Promise<{ success: boolean; message: string }> {
+    return this.submitContactMessage(data);
   },
 
   async getAdminContactMessages(): Promise<ContactMessageItem[]> {

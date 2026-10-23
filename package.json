@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo/metro-runtime": "~58.0.15",
     "@expo/ui": "~58.0.22",
     "@expo/vector-icons": "^15.0.2",
     "expo": "~58.0.17",
@@ -51,7 +52,8 @@
     "test:verify:phase4": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase4.ts",
     "test:verify:phase5": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase5.ts",
     "test:verify:phase6": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase6.ts",
-    "test:verify:all": "npm run test:verify:phase1 && npm run test:verify:phase2 && npm run test:verify:phase3 && npm run test:verify:phase4 && npm run test:verify:phase5 && npm run test:verify:phase6"
+    "test:verify:phase7": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase7.ts",
+    "test:verify:all": "npm run test:verify:phase1 && npm run test:verify:phase2 && npm run test:verify:phase3 && npm run test:verify:phase4 && npm run test:verify:phase5 && npm run test:verify:phase6 && npm run test:verify:phase7"
   },
   "private": true
 }

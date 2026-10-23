@@ -28,12 +28,16 @@ export const Colors = {
 
   // Text & Ink
   ink: '#1d1d1f',
+  inkDark: '#1d1d1f',
   inkMuted80: '#3a3a3c',
   inkMuted48: '#8e8e93',
+  inkSecondary: '#86868b',
   inkWhite: '#ffffff',
 
   // Borders & Dividers
   hairline: '#e5e5ea',
+  borderSubtle: '#e5e5ea',
+  borderField: '#d2d2d7',
   divider: '#f0f0f0',
 
   // Semantic States (Cabin status, tokens, queue states)
@@ -179,6 +183,12 @@ export const Typography = {
     letterSpacing: 0,
     lineHeight: 20,
   },
+  subhead: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    letterSpacing: 0,
+    lineHeight: 20,
+  },
   footnote: {
     fontSize: 13,
     fontWeight: '400' as const,
@@ -190,6 +200,18 @@ export const Typography = {
     fontWeight: '400' as const,
     letterSpacing: 0.2,
     lineHeight: 16,
+  },
+  caption1: {
+    fontSize: 12,
+    fontWeight: '400' as const,
+    letterSpacing: 0.2,
+    lineHeight: 16,
+  },
+  caption2: {
+    fontSize: 11,
+    fontWeight: '400' as const,
+    letterSpacing: 0.2,
+    lineHeight: 14,
   },
   captionBold: {
     fontSize: 12,
@@ -266,6 +288,42 @@ export const Shadows = {
     },
     android: {
       elevation: 8,
+    },
+    default: {},
+  }),
+  sm: Platform.select({
+    ios: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.04,
+      shadowRadius: 4,
+    },
+    android: {
+      elevation: 1,
+    },
+    default: {},
+  }),
+  md: Platform.select({
+    ios: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.06,
+      shadowRadius: 10,
+    },
+    android: {
+      elevation: 3,
+    },
+    default: {},
+  }),
+  lg: Platform.select({
+    ios: {
+      shadowColor: '#000000',
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: 0.1,
+      shadowRadius: 18,
+    },
+    android: {
+      elevation: 6,
     },
     default: {},
   }),

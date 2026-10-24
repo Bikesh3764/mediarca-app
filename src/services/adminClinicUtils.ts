@@ -8,7 +8,7 @@
  * - Filtering & Searching for Admin & Clinic Tables
  */
 
-import { Doctor, ClinicProfile, ContactMessageItem } from './api';
+import type { Doctor, ClinicProfile, ContactMessageItem } from './api';
 import { isValidIndianPhone, formatIndianPhone, sanitizeIndianPhone } from '../utils/phoneUtils';
 
 export interface ContactMessagePayload {

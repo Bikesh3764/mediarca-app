@@ -7,7 +7,8 @@
  * - Pass display state resolution (getPassDisplayData)
  */
 
-import { Appointment, getLocalDateString, cleanSlotName } from './api';
+import type { Appointment } from './api';
+import { getLocalDateString, cleanSlotName } from './dateTimeUtils';
 
 /**
  * Formats wait time in minutes to user-friendly human string.

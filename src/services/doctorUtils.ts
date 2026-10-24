@@ -1,11 +1,13 @@
-import {
+import type {
   Appointment,
   DoctorLeave,
+} from './api';
+import {
   getLocalDateString,
   timeToMinutes,
   getIndianTimeMinutes,
   getDayOfWeekCode,
-} from './api';
+} from './dateTimeUtils';
 
 // ==========================================
 // 1. Clinical Vitals Validation

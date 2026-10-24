@@ -10,7 +10,7 @@
  */
 
 import { isValidIndianPhone, sanitizeIndianPhone } from '../utils/phoneUtils';
-import { ReceptionistLinkedDoctor, ReceptionistQueueItem } from './api';
+import type { ReceptionistLinkedDoctor, ReceptionistQueueItem } from './api';
 
 export interface WalkinValidationResult {
   isValid: boolean;

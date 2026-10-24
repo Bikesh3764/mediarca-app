@@ -42,6 +42,38 @@ export {
 };
 export type { SafeFetchOptions } from './safeFetch';
 
+import {
+  ALL_WEEKDAYS,
+  WEEKDAY_NAMES,
+  timeToMinutes,
+  minutesTo12Hour,
+  format12Hour,
+  calculateSlotMetrics,
+  cleanSlotName,
+  formatShiftOption,
+  getLocalDateString,
+  getIndianTimeMinutes,
+  getTomorrowDateString,
+  getDayOfWeekCode,
+} from './dateTimeUtils';
+import type { WeekdayCode } from './dateTimeUtils';
+
+export {
+  ALL_WEEKDAYS,
+  WEEKDAY_NAMES,
+  timeToMinutes,
+  minutesTo12Hour,
+  format12Hour,
+  calculateSlotMetrics,
+  cleanSlotName,
+  formatShiftOption,
+  getLocalDateString,
+  getIndianTimeMinutes,
+  getTomorrowDateString,
+  getDayOfWeekCode,
+};
+export type { WeekdayCode };
+
 export {
   formatWaitTime,
   calculatePollingInterval,
@@ -93,19 +125,6 @@ export interface SlotStatusResult {
   leaveReason?: string;
   isDayOff?: boolean;
 }
-
-export const ALL_WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'] as const;
-export type WeekdayCode = (typeof ALL_WEEKDAYS)[number];
-
-export const WEEKDAY_NAMES: Record<string, string> = {
-  MON: 'Monday',
-  TUE: 'Tuesday',
-  WED: 'Wednesday',
-  THU: 'Thursday',
-  FRI: 'Friday',
-  SAT: 'Saturday',
-  SUN: 'Sunday',
-};
 
 export const WEEKDAY_SHORT_NAMES: Record<string, string> = {
   MON: 'Mon',
@@ -167,70 +186,6 @@ export interface DoctorScheduleConfig {
   isWorkingToday: boolean;
 }
 
-// Time calculation helpers
-export const timeToMinutes = (timeStr: string): number => {
-  if (!timeStr) return 0;
-  const clean = timeStr.replace(/\s*(AM|PM)/i, '').trim();
-  const [hStr, mStr] = clean.split(':');
-  let h = parseInt(hStr, 10) || 0;
-  const m = parseInt(mStr, 10) || 0;
-  if (timeStr.toUpperCase().includes('PM') && h < 12) h += 12;
-  if (timeStr.toUpperCase().includes('AM') && h === 12) h = 0;
-  return h * 60 + m;
-};
-
-export const minutesTo12Hour = (totalMinutes: number): string => {
-  const normalized = ((Math.floor(totalMinutes) % (24 * 60)) + (24 * 60)) % (24 * 60);
-  let hours = Math.floor(normalized / 60);
-  const minutes = normalized % 60;
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  hours = hours % 12;
-  hours = hours ? hours : 12;
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-};
-
-export const format12Hour = (time24: string): string => {
-  if (!time24) return '09:00 AM';
-  if (time24.includes('AM') || time24.includes('PM')) return time24;
-  return minutesTo12Hour(timeToMinutes(time24));
-};
-
-export const calculateSlotMetrics = (
-  startTime: string,
-  endTime: string,
-  maxPatients: number
-): { durationMinutes: number; avgConsultationMinutes: number } => {
-  const startMins = timeToMinutes(startTime);
-  let endMins = timeToMinutes(endTime);
-  if (endMins <= startMins) {
-    endMins += 24 * 60;
-  }
-  const durationMinutes = Math.max(1, endMins - startMins);
-  const safeMax = Math.max(1, maxPatients || 1);
-  const rawAvg = durationMinutes / safeMax;
-  const avgConsultationMinutes = Math.round(rawAvg * 10) / 10;
-  return { durationMinutes, avgConsultationMinutes };
-};
-
-export const cleanSlotName = (name?: string | null, fallback = 'Shift'): string => {
-  if (!name || !name.trim()) return fallback;
-  const shiftNumMatch = name.match(/shift\s*(\d+)/i);
-  if (shiftNumMatch) {
-    return `Shift ${shiftNumMatch[1]}`;
-  }
-  let cleaned = name.replace(/\s*\([^)]*\)/g, '').trim();
-  cleaned = cleaned.replace(/\s*\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?\s*[-–to]\s*\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)?/gi, '').trim();
-  cleaned = cleaned.replace(/\s*(?:morning|afternoon|evening|night)/gi, '').trim();
-  return cleaned || fallback;
-};
-
-export const formatShiftOption = (
-  slot: { name?: string | null; startTime?: string; endTime?: string },
-  isEnded?: boolean
-): string => {
-  const baseName = cleanSlotName(slot.name, 'Shift');
-  return `${baseName}${isEnded ? ' • Ended' : ''}`;
-};
 
 export const parseDoctorSlots = (doctor: any): DoctorSlot[] => {
   if (doctor?.slots) {
@@ -353,54 +308,6 @@ export const formatDoctorDegrees = (qualifications?: string | null): string => {
   }
 
   return 'Certified Specialist';
-};
-
-export const getLocalDateString = (d: Date = new Date()): string => {
-  try {
-    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(d);
-  } catch {
-    const istMs = d.getTime() + 330 * 60 * 1000;
-    const istDate = new Date(istMs);
-    const year = istDate.getUTCFullYear();
-    const month = String(istDate.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(istDate.getUTCDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-};
-
-export const getIndianTimeMinutes = (d: Date = new Date()): number => {
-  try {
-    const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'Asia/Kolkata',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: false,
-    }).formatToParts(d);
-    let hour = parseInt(parts.find((p) => p.type === 'hour')?.value || '0', 10);
-    if (hour === 24) hour = 0;
-    const minute = parseInt(parts.find((p) => p.type === 'minute')?.value || '0', 10);
-    return hour * 60 + minute;
-  } catch {
-    const utcMinutes = d.getUTCHours() * 60 + d.getUTCMinutes();
-    return (utcMinutes + 330) % (24 * 60);
-  }
-};
-
-export const getTomorrowDateString = (d: Date = new Date()): string => {
-  const tomorrow = new Date(d.getTime() + 24 * 60 * 60 * 1000);
-  return getLocalDateString(tomorrow);
-};
-
-export const getDayOfWeekCode = (dateStr?: string): WeekdayCode => {
-  const targetStr = dateStr || getLocalDateString();
-  const match = targetStr.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!match) return 'MON';
-  const year = parseInt(match[1], 10);
-  const month = parseInt(match[2], 10);
-  const day = parseInt(match[3], 10);
-  const d = new Date(Date.UTC(year, month - 1, day));
-  const codes: WeekdayCode[] = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-  return codes[d.getUTCDay()] || 'MON';
 };
 
 export const DEFAULT_PHONE_PREFIX = '+91 ';

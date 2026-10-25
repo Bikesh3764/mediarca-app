@@ -42,7 +42,7 @@
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web",
+    "web": "expo start --web --port 3000",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "test:verify": "npx tsx -r ./scripts/mock-rn.js scripts/verify-phase5.ts",

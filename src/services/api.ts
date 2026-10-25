@@ -98,7 +98,8 @@ export type {
 } from './receptionistUtils';
 
 const isDevFallback = Boolean(
-  typeof __DEV__ !== 'undefined' && __DEV__ && process.env.EXPO_PUBLIC_ENABLE_DEMO_FALLBACK === 'true'
+  (typeof __DEV__ !== 'undefined' && __DEV__) ||
+  process.env.EXPO_PUBLIC_ENABLE_DEMO_FALLBACK === 'true'
 );
 
 export interface DoctorSlot {
